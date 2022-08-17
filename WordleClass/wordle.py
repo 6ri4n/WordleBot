@@ -22,32 +22,35 @@ class WordleClass:
         ]
 
     def display_game_grid(self, player_turn):
-        # TODO: build player grid
-        if player_turn % 2 != 0:
-            # player turn
-            str_game_grid = '➡️ ' + 'player' + '\n'
-        else:
-            # ai turn
-            str_game_grid = 'player' + '\n'
-        
-        for list in self.player_grid:
-            for element in list:
-                str_game_grid += element
-            str_game_grid += '\n'
-        
+        # TODO: combine player and AI grid as one message
+
         # TODO: build AI grid
+        # player turn
         if player_turn % 2 != 0:
-            # player turn
-            str_game_grid += '\n' + 'AI' + '\n'
+            str_game_grid = '🤖' + '\n'
+        # AI turn
         else:
-            # ai turn
-            str_game_grid += '\n' + '➡️ ' + 'AI' + '\n'
+            str_game_grid = '➡️ ' + '🤖' + '\n'
 
         for list in self.ai_grid:
             for element in list:
                 str_game_grid += element
             str_game_grid += '\n'
 
+        # TODO: build player grid
+        # player turn
+        if player_turn % 2 != 0:
+            str_game_grid += '\n' + '➡️ ' + '👤' + '\n'
+        # AI turn
+        else:
+            str_game_grid += '\n' + '👤' + '\n'
+        
+        for list in self.player_grid:
+            for element in list:
+                str_game_grid += element
+            str_game_grid += '\n'
+
+        # finished grid message
         return str_game_grid
 
     def get_random_word(self):

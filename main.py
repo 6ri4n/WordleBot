@@ -19,7 +19,7 @@ async def on_application_command_error(ctx, error):
     else:
         raise error
 
-@bot.slash_command(guild_ids=[1009167894573219943], description = "🧠 vs 🤖")
+@bot.slash_command(guild_ids=[1009167894573219943], description = "play wordle against an AI")
 @commands.cooldown(1, 1, commands.BucketType.user) # 1 sec cd for ease of testing
 async def play(ctx):
     # TODO: set the correct 5-letter word
@@ -41,14 +41,14 @@ async def play(ctx):
     while game_state and player_turn < 13:
         try:
             # TODO: turn based system
+            # player turn
             if player_turn % 2 != 0:
-                # player turn
                 await ctx.send(str(player_turn) + " player turn")
                 player_guess = await bot.wait_for("message", timeout = 5.0, check = check)
                 await ctx.send(player_guess.content.lower())
                 player_turn += 1
+            # AI turn
             else:
-                # AI turn
                 await ctx.send(str(player_turn) + " AI turn")
                 await ctx.send("AI turn completed")
                 player_turn += 1
@@ -63,7 +63,7 @@ async def play(ctx):
 
 
 
-@bot.slash_command(guild_ids=[1009167894573219943], description = "test")
+@bot.slash_command(guild_ids=[1009167894573219943], description = "play wordle against an AI")
 @commands.cooldown(1, 1, commands.BucketType.user) # 1 sec cd for ease of testing
 async def grid(ctx):
     game = WordleClass()
