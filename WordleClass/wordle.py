@@ -58,5 +58,8 @@ class WordleClass:
         return random.choice(self.five_letter_words)
 
     def check_guess(self):
-        # TODO: check if the guess matches the correct word and returns a list containing the color indicators
+        # TODO:
+        # check if the guess is a valid word from the dictionary
+        # check if the guess matches the correct word
+        # returns a boolean and a list containing the tile indicators
         pass
