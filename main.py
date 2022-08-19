@@ -2,10 +2,9 @@ import asyncio
 import random
 import time
 import discord
+from discord import Option
 from discord.ext import commands
-
 from WordleClass.wordle import WordleClass
-
 
 bot = commands.Bot(command_prefix = ".", intents=discord.Intents.all())
 
@@ -22,57 +21,61 @@ async def on_application_command_error(ctx, error):
         raise error
 
 @bot.slash_command(guild_ids=[1009167894573219943], description = "play wordle against an AI")
-@commands.cooldown(1, 5, commands.BucketType.user) # 5 sec cd for ease of testing
-async def play(ctx):
-    # TODO: set the correct 5-letter word
+@commands.cooldown(1, 5, commands.BucketType.user) # TODO: change later - set 5 sec cd for ease of testing
+async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', required = True)):
+    # randomly set a 5-letter word that the player and ai is supposed to guess
     game = WordleClass()
-    correct_word = game.get_random_word()
+    actual_word = 'hence' #game.get_random_word()
 
-    # TODO: randomly pick who goes first - player or AI
-    # turns - player is odd, AI is even
-    # TODO: random later - random.choice([1,2])
-    player_turn = 1 # 1 for now for testing
+    # player goes first
+    player_turn = 1
 
-    await ctx.send("game starting in 5 seconds", delete_after = 5.0)
-    time.sleep(5)
+    # display start message
+    start_message = discord.Embed(
+            title = "game will begin in 5 seconds.",
+            color = discord.Color.from_rgb(59,136,195)
+        )
+    start_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+    await ctx.respond(embed = start_message, delete_after = 5.0)
 
-    # game when in progress is true otherwise false when game ends
+    def check(message):
+        return len(message.content) == 5 and message.author == ctx.author
+    # in progress state
     game_state = True
+    # setup invalid message
+    invalid_message = discord.Embed(
+        title = "invalid word, please try again.",
+        color = discord.Color.from_rgb(59,136,195)
+    )
+    invalid_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+
+    time.sleep(5)
+    print('game start')
+    base_game_message = await ctx.send(game.display_game_grid(player_turn))
     while game_state and player_turn < 13:
         try:
-            # TODO: turn based system
-            # player turn
+            # TODO: implement turn based
+            # turns - player is odd, AI is even
             if player_turn % 2 != 0:
-                await ctx.send(str(player_turn) + " player turn")
-                def check(message):
-                    return len(message.content) == 5 and message.author == ctx.author
-                player_guess = await bot.wait_for("message", timeout = 5.0, check = check)
-                await ctx.send(player_guess.content.lower())
-                player_turn += 1
-            # AI turn
+                # player turn
+                player_guess = await bot.wait_for("message", timeout = 10.0, check = check)
+                #player_guess.content.lower()
+                # waits until a valid guess is given
+                while not (game.check_guess(player_guess.content.lower(), actual_word, player_turn) == False):
+                    # display invalid message
+                    await ctx.send(embed = invalid_message, delete_after = 3.5)
+                    player_guess = await bot.wait_for("message", timeout = 10.0, check = check)
             else:
-                await ctx.send(str(player_turn) + " AI turn")
-                await ctx.send("AI turn completed")
-                player_turn += 1
+                # AI turn
+                time.sleep(3)
+            player_turn += 1
+            await base_game_message.edit(game.display_game_grid(player_turn))
         # time out after player inactivity
         except asyncio.TimeoutError:
             game_state = False
-            await ctx.send("game timed out")
-
-
-    await ctx.send("game completed")
-
-
-
-
-@bot.slash_command(guild_ids=[1009167894573219943], description = "play wordle against an AI")
-@commands.cooldown(1, 5, commands.BucketType.user)
-async def grid(ctx):
-    game = WordleClass()
-    await ctx.respond(game.display_game_grid(1))
-
-    await ctx.respond(game.display_game_grid(2))
-
+            await ctx.send("game timed out due to player inactivity")
+            
+    print('game completed')
 
 @bot.slash_command(guild_ids=[1009167894573219943], description = "how-to-play wordle")
 @commands.cooldown(1, 60, commands.BucketType.user)
@@ -89,15 +92,15 @@ async def help(ctx):
                            "🟨 - the letter is in the word but in the incorrect spot\n"
                            "⬛ - the letter is not in the word"
                         ),
-            color = discord.Color.from_rgb(138, 134, 135)
+            color = discord.Color.from_rgb(59,136,195)
         )
     help_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
 
     await ctx.respond(embed = help_message)
 
-@bot.slash_command(guild_ids=[1009167894573219943], description = "test color tile indicators")
-@commands.cooldown(1, 60, commands.BucketType.user)
-async def color(ctx):
+@bot.slash_command(guild_ids=[1009167894573219943], description = "testing")
+@commands.cooldown(1, 5, commands.BucketType.user)
+async def test_play(ctx):
     # TODO: test color tile indicators
     game = WordleClass()
     print('player turn:')
@@ -112,7 +115,6 @@ async def color(ctx):
     print('ai turn:')
     game.check_guess("power", "hence", 4)
     await ctx.send(game.display_game_grid(4))
-
 
 token = open("token.txt", "r")
 bot.run(token.read())

@@ -40,7 +40,9 @@ class WordleClass:
 
         # TODO: build player grid
         # player turn
-        if player_turn % 2 != 0:
+        if player_turn == 13:
+            str_game_grid += '\n' + '👤' + '\n'
+        elif player_turn % 2 != 0:
             str_game_grid += '\n' + '➡️ ' + '👤' + '\n'
         # AI turn
         else:
@@ -64,36 +66,52 @@ class WordleClass:
         # check if the guess has any matches to the correct word
         # returns a boolean
         #
+        # algorithm:
+        # guess - horse, actual word - hence
+        # letters in guess start large search in actual word then gradually decreases the amount of search
+        # the letter h in horse would search the letters in actual word: h, e, n, c, e
+        # the letter o in horse would search the letters in actual word: e, n, c, e
+        # the letter r in horse would search the letters in actual word: n, c, e
+        # the letter s in horse would search the letters in actual word: c, e
+        # the letter e in horse would search the letters in actual word: e
+        #
         # pseudocode:
         # if guess is valid word do
         #     for each letter in guess do
         #         if the letter is in actual_word do
         #             for each letter in actual_word do
-        #                 if the letter in guess is the letter in actual_word do
+        #                 if the letter in guess == the letter in actual_word do
         #                     if the spot of the letter in guess is the same in actual_word do
         #                         make tile green
         #                         end search
         #                     else:
         #                         make tile yellow
         #                         end search
+        #                     reduce the search in actual word
+        #                 reduce the search in actual word
         #         else if on last letter of guess:
         #             return false
+        #         else
+        #             reduce the search in actual word
         #     return true
         # else:
         #     return false
 
         dictionary = enchant.Dict('en_US')
+        #print('guess: ' + guess)
+        #print('in dictionary: ' + str(dictionary.check(guess)))
         # checks if the guess is a valid word
-        if dictionary.check(guess.lower()):
+        if dictionary.check(guess):
             # if yes then begins search
-            for guess_index, guess_letter in enumerate(guess.lower()):
+            for guess_index, guess_letter in enumerate(guess):
                 # checks if the current letter in guess is in the actual word - decreases search each iteration
                 if guess_letter in actual_word:
                     # if yes then begins to search for the letter in the actual word
                     for actual_word_letter in actual_word:
                         # checks if the letter in guess matches the letter in the actual word
                         if guess_letter == actual_word_letter:
-                            # checks if both letters are in the same spot in the word
+                            # determine index of the letter from the actual word
+                            # because the search in actual word gets reduced each iteration
                             if len(actual_word) == 1:
                                 actual_word_index = 4
                             elif len(actual_word) == 2:
@@ -142,10 +160,10 @@ class WordleClass:
                     # check whose turn it is
                     if player_turn % 2 != 0:
                         # player turn
-                        self.player_grid[int(player_turn // 2)][5] += guess.lower()
+                        self.player_grid[int(player_turn // 2)][5] = ' ' + guess
                     else:
                         # ai turn
-                        self.ai_grid[int((player_turn / 2) -1)][5] += guess.lower()
+                        self.ai_grid[int((player_turn / 2) -1)][5] = ' ' + guess
                     return False
                 else:
                     # continue to limit the search
@@ -155,10 +173,14 @@ class WordleClass:
             # check whose turn it is
             if player_turn % 2 != 0:
                 # player turn
-                self.player_grid[int(player_turn // 2)][5] += guess.lower()
+                self.player_grid[int(player_turn // 2)][5] = ' ' + guess
             else:
                 # ai turn
-                self.ai_grid[int((player_turn / 2) -1)][5] += guess.lower()
+                self.ai_grid[int((player_turn / 2) -1)][5] = ' ' + guess
             return True
         else:
             return False
+
+    def check_for_win(self, player_turn):
+        # TODO: check for win condition
+        pass
