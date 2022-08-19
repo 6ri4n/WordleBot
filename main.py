@@ -95,7 +95,16 @@ async def help(ctx):
 
     await ctx.respond(embed = help_message)
 
+@bot.slash_command(guild_ids=[1009167894573219943], description = "test color tile indicators")
+@commands.cooldown(1, 60, commands.BucketType.user)
+async def color(ctx):
+    # TODO: test color tile indicators
+    game = WordleClass()
+    game.check_guess("horse", "hence", 1)
+    await ctx.send(game.display_game_grid(1))
 
+    game.check_guess("fence", "hence", 2)
+    await ctx.send(game.display_game_grid(2))
 
 token = open("token.txt", "r")
 bot.run(token.read())
