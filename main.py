@@ -11,7 +11,7 @@ bot = commands.Bot(command_prefix = ".", intents=discord.Intents.all())
 
 @bot.event
 async def on_ready():
-    print(f"\nONLINE\nLogged in as {bot.user}")
+    print(f"\nONLINE\nLogged in as {bot.user}\n")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name = "Wordle"))
 
 @bot.event
@@ -29,7 +29,7 @@ async def play(ctx):
     correct_word = game.get_random_word()
 
     # TODO: randomly pick who goes first - player or AI
-    # 1 - player, odds, 2 - AI, evens
+    # turns - player is odd, AI is even
     # TODO: random later - random.choice([1,2])
     player_turn = 1 # 1 for now for testing
 
@@ -100,11 +100,19 @@ async def help(ctx):
 async def color(ctx):
     # TODO: test color tile indicators
     game = WordleClass()
+    print('player turn:')
     game.check_guess("horse", "hence", 1)
     await ctx.send(game.display_game_grid(1))
-
+    print('ai turn:')
     game.check_guess("fence", "hence", 2)
     await ctx.send(game.display_game_grid(2))
+    print('player turn:')
+    game.check_guess("hange", "hence", 3)
+    await ctx.send(game.display_game_grid(3))
+    print('ai turn:')
+    game.check_guess("power", "hence", 4)
+    await ctx.send(game.display_game_grid(4))
+
 
 token = open("token.txt", "r")
 bot.run(token.read())
