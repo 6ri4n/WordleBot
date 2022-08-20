@@ -30,21 +30,25 @@ async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', r
     # player goes first
     player_turn = 1
 
-    # display start message
+    # setup start message
     start_message = discord.Embed(
-            title = "game will begin in 5 seconds.",
-            color = discord.Color.from_rgb(59,136,195)
+        title = 'game will begin in 5 seconds.',
+        color = discord.Color.from_rgb(59,136,195)
         )
     start_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+    # display start message
     await ctx.respond(embed = start_message, delete_after = 5.0)
 
     def check(message):
         return len(message.content) == 5 and message.author == ctx.author
-    # in progress state
-    game_state = True
+    # game progress
+    in_progress = True
+    timeout = False
+    # winner/loser/draw
+    game_status = 'draw'
     # setup invalid message
     invalid_message = discord.Embed(
-        title = "invalid word, please try again.",
+        title = 'invalid word, please try again.',
         color = discord.Color.from_rgb(59,136,195)
     )
     invalid_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
@@ -52,30 +56,74 @@ async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', r
     time.sleep(5)
     print('game start')
     base_game_message = await ctx.send(game.display_game_grid(player_turn))
-    while game_state and player_turn < 13:
+    while in_progress and player_turn < 13:
         try:
             # TODO: implement turn based
             # turns - player is odd, AI is even
             if player_turn % 2 != 0:
                 # player turn
                 player_guess = await bot.wait_for("message", timeout = 10.0, check = check)
-                #player_guess.content.lower()
                 # waits until a valid guess is given
-                while not (game.check_guess(player_guess.content.lower(), actual_word, player_turn) == False):
+                #print('player guess: ' + player_guess.content.lower())
+                #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
+                #print('comparison: ' + str(not game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
+                while not game.check_guess(player_guess.content.lower(), actual_word, player_turn):
                     # display invalid message
                     await ctx.send(embed = invalid_message, delete_after = 3.5)
                     player_guess = await bot.wait_for("message", timeout = 10.0, check = check)
+                # delete the player's guess
+                await player_guess.delete()
+                # check if the guess matches the word
+                if game.check_for_win(player_turn) == 'player':
+                    game_status = 'player'
+                    in_progress = False
             else:
                 # AI turn
                 time.sleep(3)
+                if game.check_for_win(player_turn) == 'ai':
+                    game_status = 'ai'
+                    in_progress = False
+            # continue to next turn
             player_turn += 1
             await base_game_message.edit(game.display_game_grid(player_turn))
         # time out after player inactivity
         except asyncio.TimeoutError:
-            game_state = False
+            in_progress = False
+            timeout = True
             await ctx.send("game timed out due to player inactivity")
-            
     print('game completed')
+    # game completed
+    # display end messages - actual word and winner/loser/draw
+    if timeout == False:
+        actual_word_message = discord.Embed(
+            title = 'correct word: ' + '||' + actual_word + '||',
+            color = discord.Color.from_rgb(59,136,195)
+        )
+        actual_word_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+        # show the actual word after match ends
+        await ctx.send(embed = actual_word_message)
+        # show winner/loser/draw message
+        if game_status == 'player':
+            end_message = discord.Embed(
+                title = 'Victory! 👤 🏆\nDefeat! 🤖 ✌️',
+                color = discord.Color.from_rgb(59,136,195)
+            )
+            end_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+            await ctx.send(embed = end_message)
+        elif game_status == 'ai':
+            end_message = discord.Embed(
+                title = 'Victory! 🤖 🏆\nDefeat! 👤 ✌️',
+                color = discord.Color.from_rgb(59,136,195)
+            )
+            end_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+            await ctx.send(embed = end_message)
+        else:
+            end_message = discord.Embed(
+                title = 'Draw! 👤 🤝 🤖',
+                color = discord.Color.from_rgb(59,136,195)
+            )
+            end_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+            await ctx.send(embed = end_message)
 
 @bot.slash_command(guild_ids=[1009167894573219943], description = "how-to-play wordle")
 @commands.cooldown(1, 60, commands.BucketType.user)

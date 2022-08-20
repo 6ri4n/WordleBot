@@ -183,4 +183,12 @@ class WordleClass:
 
     def check_for_win(self, player_turn):
         # TODO: check for win condition
-        pass
+        if player_turn % 2 != 0:
+            # player turn
+            # check if the guess is all green - guess matches the actual word
+            if self.player_grid[int(player_turn // 2)][:5] == ['🟩', '🟩', '🟩', '🟩', '🟩']:
+                return 'player'
+        else:
+            # ai turn
+            if self.ai_grid[int((player_turn / 2) -1)][:5] == ['🟩', '🟩', '🟩', '🟩', '🟩']:
+                return 'ai'
