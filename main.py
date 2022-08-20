@@ -20,9 +20,9 @@ async def on_application_command_error(ctx, error):
     else:
         raise error
 
-@bot.slash_command(guild_ids=[1009167894573219943], description = "play wordle against an AI")
+@bot.slash_command(guild_ids=[1009167894573219943], description = "Play Wordle Against an AI")
 @commands.cooldown(1, 5, commands.BucketType.user) # TODO: change later - set 5 sec cd for ease of testing
-async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', required = True)):
+async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', required = True)):
     # randomly set a 5-letter word that the player and ai is supposed to guess
     game = WordleClass()
     actual_word = 'hence' #game.get_random_word()
@@ -32,7 +32,7 @@ async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', r
 
     # setup start message
     start_message = discord.Embed(
-        title = 'game will begin in 5 seconds.',
+        title = 'Match Starting in 5 Seconds',
         color = discord.Color.from_rgb(59,136,195)
         )
     start_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
@@ -48,18 +48,18 @@ async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', r
     game_status = 'draw'
     # setup invalid message
     invalid_message = discord.Embed(
-        title = 'invalid word, please try again.',
+        title = 'Invalid Word, Please Try Again',
         color = discord.Color.from_rgb(59,136,195)
     )
     invalid_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
 
     time.sleep(5)
     print('game start')
-    base_game_message = await ctx.send(game.display_game_grid(player_turn, game_status))
+    base_game_message = await ctx.send(game.display_game_grid(player_turn, game_status, timeout))
     while in_progress and player_turn < 13:
         try:
             # TODO: implement turn based
-            # turns - player is odd, AI is even
+            # turns - player is odd, ai is even
             if player_turn % 2 != 0:
                 # player turn
                 player_guess = await bot.wait_for("message", timeout = 10.0, check = check)
@@ -73,33 +73,44 @@ async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', r
                     player_guess = await bot.wait_for("message", timeout = 10.0, check = check)
                 # delete the player's guess
                 await player_guess.delete()
-                # check if the guess matches the word
+                # check if the guess matches the actual word
                 if game.check_for_win(player_turn) == 'player':
                     game_status = 'player'
                     in_progress = False
             else:
-                # AI turn
-                time.sleep(3)
+                # ai turn
+                time.sleep(3.5)
+                # determine ai difficulty
+                if difficulty == 'test':
+                    # retrieve guess using the corresponding difficulty and have the guess checked
+                    game.check_guess(game.get_word_difficulty_test(), actual_word, player_turn)
+                elif difficulty == 'easy':
+                    pass
+                elif difficulty == 'normal':
+                    pass
+                elif difficulty == 'hard':
+                    pass
+                # check if the guess matches the actual word
                 if game.check_for_win(player_turn) == 'ai':
                     game_status = 'ai'
                     in_progress = False
             # continue to next turn
             player_turn += 1
-            await base_game_message.edit(game.display_game_grid(player_turn, game_status))
+            await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout))
         # time out after player inactivity
         except asyncio.TimeoutError:
             in_progress = False
             timeout = True
-            await ctx.send("game timed out due to player inactivity")
+            timeout_message = discord.Embed(
+                title = 'Timed Out Due to Player Inactivity',
+                color = discord.Color.from_rgb(59,136,195)
+            )
+            timeout_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+            await ctx.send(embed = timeout_message)
     print('game completed')
     # game completed
-    # display end messages - actual word and winner/loser/draw
+    # display end messages - actual word and winner/draw
     if timeout == False:
-        actual_word_message = discord.Embed(
-            title = 'correct word: ' + '||' + actual_word + '||',
-            color = discord.Color.from_rgb(59,136,195)
-        )
-        actual_word_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
         # show the actual word after match ends
         await ctx.send('correct word: ' + '||' + actual_word + '||')
         # show winner/loser/draw message
@@ -124,8 +135,10 @@ async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', r
             )
             end_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
             await ctx.send(embed = end_message)
+    else:
+        await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout))
 
-@bot.slash_command(guild_ids=[1009167894573219943], description = "how-to-play wordle")
+@bot.slash_command(guild_ids=[1009167894573219943], description = "How-to-Play Wordle")
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def help(ctx):
     # TODO: send embed message that introduces the game, how-to-play page
@@ -139,6 +152,7 @@ async def help(ctx):
                            "🟩 - the letter is in the word and in the correct spot\n"
                            "🟨 - the letter is in the word but in the incorrect spot\n"
                            "⬛ - the letter is not in the word"
+                           # add statements about the ai difficulty modes
                         ),
             color = discord.Color.from_rgb(59,136,195)
         )
@@ -146,7 +160,7 @@ async def help(ctx):
 
     await ctx.respond(embed = help_message)
 
-@bot.slash_command(guild_ids=[1009167894573219943], description = "testing")
+@bot.slash_command(guild_ids=[1009167894573219943], description = "Testing")
 @commands.cooldown(1, 5, commands.BucketType.user)
 async def test_play(ctx):
     # TODO: test color tile indicators
