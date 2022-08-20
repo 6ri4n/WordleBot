@@ -55,7 +55,7 @@ async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', r
 
     time.sleep(5)
     print('game start')
-    base_game_message = await ctx.send(game.display_game_grid(player_turn))
+    base_game_message = await ctx.send(game.display_game_grid(player_turn, game_status))
     while in_progress and player_turn < 13:
         try:
             # TODO: implement turn based
@@ -85,7 +85,7 @@ async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', r
                     in_progress = False
             # continue to next turn
             player_turn += 1
-            await base_game_message.edit(game.display_game_grid(player_turn))
+            await base_game_message.edit(game.display_game_grid(player_turn, game_status))
         # time out after player inactivity
         except asyncio.TimeoutError:
             in_progress = False
@@ -101,18 +101,18 @@ async def play(ctx, difficulty: Option(str, 'modes: test, easy, normal, hard', r
         )
         actual_word_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
         # show the actual word after match ends
-        await ctx.send(embed = actual_word_message)
+        await ctx.send('correct word: ' + '||' + actual_word + '||')
         # show winner/loser/draw message
         if game_status == 'player':
             end_message = discord.Embed(
-                title = 'Victory! 👤 🏆\nDefeat! 🤖 ✌️',
+                title = 'Victory! 👤 🏆',
                 color = discord.Color.from_rgb(59,136,195)
             )
             end_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
             await ctx.send(embed = end_message)
         elif game_status == 'ai':
             end_message = discord.Embed(
-                title = 'Victory! 🤖 🏆\nDefeat! 👤 ✌️',
+                title = 'Victory! 🤖 🏆',
                 color = discord.Color.from_rgb(59,136,195)
             )
             end_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")

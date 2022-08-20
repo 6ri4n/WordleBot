@@ -22,36 +22,52 @@ class WordleClass:
             ['⬛', '⬛', '⬛', '⬛', '⬛', ' ']  # 12
         ]
 
-    def display_game_grid(self, player_turn):
+    def display_game_grid(self, player_turn, game_status):
         # TODO: combine player and AI grid as one message
-
-        # TODO: build AI grid
-        # player turn
-        if player_turn % 2 != 0:
+        # check for win condition or last turn to display proper ending grid
+        if game_status == 'player' or game_status == 'ai' or player_turn == 13:
+            # TODO: build ai grid first and then player grid second
+            # set first line to have no arrow emote
             str_game_grid = '🤖' + '\n'
-        # AI turn
-        else:
-            str_game_grid = '➡️ ' + '🤖' + '\n'
-
-        for list in self.ai_grid:
-            for element in list:
-                str_game_grid += element
-            str_game_grid += '\n'
-
-        # TODO: build player grid
-        # player turn
-        if player_turn == 13:
+            # build ai grid
+            for list in self.ai_grid:
+                for element in list:
+                    str_game_grid += element
+                str_game_grid += '\n'
+            # set first line to have no arrow emote
             str_game_grid += '\n' + '👤' + '\n'
-        elif player_turn % 2 != 0:
-            str_game_grid += '\n' + '➡️ ' + '👤' + '\n'
-        # AI turn
+            # build player grid
+            for list in self.player_grid:
+                for element in list:
+                    str_game_grid += element
+                str_game_grid += '\n'
         else:
-            str_game_grid += '\n' + '👤' + '\n'
-        
-        for list in self.player_grid:
-            for element in list:
-                str_game_grid += element
-            str_game_grid += '\n'
+            # TODO: build ai grid first and then player grid second
+            # determine whose turn
+            if player_turn % 2 != 0:
+                # player turn so no arrow emote on ai
+                str_game_grid = '🤖' + '\n'
+            else:
+                # ai turn so no arrow emote on player
+                str_game_grid = '➡️ ' + '🤖' + '\n'
+            # build ai grid
+            for list in self.ai_grid:
+                for element in list:
+                    str_game_grid += element
+                str_game_grid += '\n'
+
+            # determine whose turn
+            if player_turn % 2 != 0:
+                # player turn so set arrow emote
+                str_game_grid += '\n' + '➡️ ' + '👤' + '\n'
+            else:
+                # ai turn so no arrow emote on player
+                str_game_grid += '\n' + '👤' + '\n'
+            # build player grid
+            for list in self.player_grid:
+                for element in list:
+                    str_game_grid += element
+                str_game_grid += '\n'
 
         # finished grid message
         return str_game_grid
