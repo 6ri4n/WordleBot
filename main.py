@@ -6,6 +6,7 @@ from discord import Option
 from discord.ext import commands
 from WordleClass.wordle import WordleClass
 
+server_id_list = [872995966066757673, 1009167894573219943]
 bot = commands.Bot(command_prefix = ".", intents=discord.Intents.all())
 
 @bot.event
@@ -20,7 +21,7 @@ async def on_application_command_error(ctx, error):
     else:
         raise error
 
-@bot.slash_command(guild_ids=[1009167894573219943], description = "Play Wordle Against an AI")
+@bot.slash_command(guild_ids = server_id_list, description = "Play Wordle Against an AI")
 @commands.cooldown(1, 5, commands.BucketType.user) # TODO: change later - set 5 sec cd for ease of testing
 async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', required = True)):
     # randomly set a 5-letter word that the player and ai is supposed to guess
@@ -62,7 +63,7 @@ async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', r
             # turns - player is odd, ai is even
             if player_turn % 2 != 0:
                 # player turn
-                player_guess = await bot.wait_for("message", timeout = 10.0, check = check)
+                player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
                 #print('player guess: ' + player_guess.content.lower())
                 #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
                 #print('comparison: ' + str(not game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
@@ -70,7 +71,7 @@ async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', r
                 while not game.check_guess(player_guess.content.lower(), actual_word, player_turn):
                     # display invalid message
                     await ctx.send(embed = invalid_message, delete_after = 3.0)
-                    player_guess = await bot.wait_for("message", timeout = 10.0, check = check)
+                    player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
                 # delete the player's guess
                 await player_guess.delete()
                 # check if the guess matches the actual word
@@ -82,11 +83,14 @@ async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', r
                 time.sleep(3.0)
                 # determine ai difficulty
                 if difficulty == 'test':
+                    start_time = time.perf_counter()
                     # retrieve guess using the corresponding difficulty
                     ai_guess = game.get_word_difficulty_test()
                     # continues to retrieve a guess until a valid guess is given
                     while not game.check_guess(ai_guess, actual_word, player_turn):
                         ai_guess = game.get_word_difficulty_test()
+                    finish_time = time.perf_counter()
+                    print('operation took: ' + '{:.4f}'.format(finish_time - start_time))
                 elif difficulty == 'easy':
                     pass
                 elif difficulty == 'normal':
@@ -141,7 +145,7 @@ async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', r
     else:
         await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout))
 
-@bot.slash_command(guild_ids=[1009167894573219943], description = "How-to-Play Wordle")
+@bot.slash_command(guild_ids = server_id_list, description = "How-to-Play Wordle")
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def help(ctx):
     # TODO: send embed message that introduces the game, how-to-play page
@@ -163,7 +167,7 @@ async def help(ctx):
 
     await ctx.respond(embed = help_message)
 
-@bot.slash_command(guild_ids=[1009167894573219943], description = "Testing")
+@bot.slash_command(guild_ids = server_id_list, description = "Testing")
 @commands.cooldown(1, 5, commands.BucketType.user)
 async def test_play(ctx):
     # TODO: test color tile indicators
