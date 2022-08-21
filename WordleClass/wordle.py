@@ -115,8 +115,16 @@ class WordleClass:
         dictionary = enchant.Dict('en_US')
         #print('guess: ' + guess)
         #print('word in dictionary: ' + str(dictionary.check(guess)))
+        print(str(player_turn) + ' : ' + guess)
         # checks if the guess is a valid word
         if dictionary.check(guess):
+            # check whose turn it is
+            if player_turn % 2 != 0:
+                # display guess on player turn
+                self.player_grid[int(player_turn // 2)][5] = ' ' + guess
+            else:
+                # display guess on ai turn
+                self.ai_grid[int((player_turn / 2) -1)][5] = ' ' + guess
             # check to see if any letters in guess match the actual word
             guess_letter_in_actual_word = 0
             for guess_letter in guess:
@@ -181,26 +189,8 @@ class WordleClass:
                         # continue to limit the search
                         actual_word = actual_word[1:]
                         #print(actual_word)
-                # check whose turn it is
-                if player_turn % 2 != 0:
-                    # display guess on player turn
-                    self.player_grid[int(player_turn // 2)][5] = ' ' + guess
-                    print('turn ' + str(int(player_turn // 2) + 1) + ' - player guess: ' + guess)
-                else:
-                    # display guess on ai turn
-                    self.ai_grid[int((player_turn / 2) -1)][5] = ' ' + guess
-                    print('turn ' + str(int((player_turn / 2) -1) + 1) + ' - ai guess: ' + guess)
                 return True
             else:
-                # check whose turn it is
-                if player_turn % 2 != 0:
-                    # display guess on player turn
-                    self.player_grid[int(player_turn // 2)][5] = ' ' + guess
-                    print('turn ' + str(int(player_turn // 2) + 1) + ' - player guess: ' + guess)
-                else:
-                    # display guess on ai turn
-                    self.ai_grid[int((player_turn / 2) -1)][5] = ' ' + guess
-                    print('turn ' + str(int((player_turn / 2) -1) + 1) + ' - ai guess: ' + guess)
                 return True
         else:
             # invalid word

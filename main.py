@@ -63,13 +63,13 @@ async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', r
             if player_turn % 2 != 0:
                 # player turn
                 player_guess = await bot.wait_for("message", timeout = 10.0, check = check)
-                # waits until a valid guess is given
                 #print('player guess: ' + player_guess.content.lower())
                 #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
                 #print('comparison: ' + str(not game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
+                # continues to retrieve a guess until a valid guess is given
                 while not game.check_guess(player_guess.content.lower(), actual_word, player_turn):
                     # display invalid message
-                    await ctx.send(embed = invalid_message, delete_after = 3.5)
+                    await ctx.send(embed = invalid_message, delete_after = 3.0)
                     player_guess = await bot.wait_for("message", timeout = 10.0, check = check)
                 # delete the player's guess
                 await player_guess.delete()
@@ -79,11 +79,14 @@ async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', r
                     in_progress = False
             else:
                 # ai turn
-                time.sleep(3.5)
+                time.sleep(3.0)
                 # determine ai difficulty
                 if difficulty == 'test':
-                    # retrieve guess using the corresponding difficulty and have the guess checked
-                    game.check_guess(game.get_word_difficulty_test(), actual_word, player_turn)
+                    # retrieve guess using the corresponding difficulty
+                    ai_guess = game.get_word_difficulty_test()
+                    # continues to retrieve a guess until a valid guess is given
+                    while not game.check_guess(ai_guess, actual_word, player_turn):
+                        ai_guess = game.get_word_difficulty_test()
                 elif difficulty == 'easy':
                     pass
                 elif difficulty == 'normal':
