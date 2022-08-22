@@ -23,7 +23,7 @@ async def on_application_command_error(ctx, error):
 
 @bot.slash_command(guild_ids = server_id_list, description = "Play Wordle Against an AI")
 @commands.cooldown(1, 5, commands.BucketType.user) # TODO: change later - set 5 sec cd for ease of testing
-async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', required = True)):
+async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'normal', required = True)):
     # randomly set a 5-letter word that the player and ai is supposed to guess
     game = WordleClass()
     actual_word = 'hence' #game.get_random_word()
@@ -80,9 +80,9 @@ async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', r
                     in_progress = False
             else:
                 # ai turn
-                time.sleep(3.0)
+                time.sleep(2.5)
                 # determine ai difficulty
-                if difficulty == 'test':
+                if difficulty == 'easy':
                     start_time = time.perf_counter()
                     # retrieve guess using the corresponding difficulty
                     ai_guess = game.get_word_difficulty_test()
@@ -90,11 +90,16 @@ async def play(ctx, difficulty: Option(str, 'Modes: test, easy, normal, hard', r
                     while not game.check_guess(ai_guess, actual_word, player_turn):
                         ai_guess = game.get_word_difficulty_test()
                     finish_time = time.perf_counter()
-                    print('operation took: ' + '{:.4f}'.format(finish_time - start_time))
-                elif difficulty == 'easy':
-                    pass
+                    print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                 elif difficulty == 'normal':
-                    pass
+                    start_time = time.perf_counter()
+                    # retrieve guess using the corresponding difficulty
+                    ai_guess = game.get_word_difficulty_easy(actual_word, player_turn)
+                    # continues to retrieve a guess until a valid guess is given
+                    while not game.check_guess(ai_guess, actual_word, player_turn):
+                        ai_guess = game.get_word_difficulty_easy(actual_word, player_turn)
+                    finish_time = time.perf_counter()
+                    print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                 elif difficulty == 'hard':
                     pass
                 # check if the guess matches the actual word

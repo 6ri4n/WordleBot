@@ -115,7 +115,7 @@ class WordleClass:
         dictionary = enchant.Dict('en_US')
         #print('guess: ' + guess)
         #print('word in dictionary: ' + str(dictionary.check(guess)))
-        print(str(player_turn) + ' : ' + guess)
+        print(str(player_turn) + ' : ' + str(guess))
         # checks if the guess is a valid word
         if dictionary.check(guess):
             # check whose turn it is
@@ -208,9 +208,37 @@ class WordleClass:
             if self.ai_grid[int((player_turn / 2) -1)][:5] == ['🟩', '🟩', '🟩', '🟩', '🟩']:
                 return 'ai'
 
-    def get_word_difficulty_test(self):
-        # difficulty test - 
-        # randomly picks a word from the 5-letter word txt file
+    def get_word_difficulty_easy(self):
+        # TODO: difficulty test - generates guess that takes into account of yellow tiles
         return random.choice(self.five_letter_words)
 
-    
+    def get_word_difficulty_normal(self, actual_word, player_turn):
+        # TODO: difficulty easy - generates guess that takes into account of green and yellow tiles
+        if player_turn == 2:
+            return random.choice(self.five_letter_words)
+        # check if there are any green tiles from previous guess
+        elif '🟩' in self.ai_grid[int((player_turn / 2) -1) - 1]:
+            # generate guess with the correct letters from the previous guess
+            generate_complete = False
+            while not generate_complete:
+                correct_letters = 0
+                letter_matches = 0
+                ai_guess = random.choice(self.five_letter_words)
+                # searches for the green tiles from previous guess
+                for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1) - 1]):
+                    if tile == '🟩':
+                        correct_letters += 1
+                        for current_guess_index, letter in enumerate(ai_guess):
+                            if letter == self.ai_grid[int((player_turn / 2) -1) - 1][5][previous_guess_index + 1] and previous_guess_index == current_guess_index:
+                                letter_matches += 1
+                if letter_matches == correct_letters:
+                    generate_complete = True
+            return ai_guess
+        # otherwise generate random guess
+        else:
+            return random.choice(self.five_letter_words)
+
+    def get_word_difficulty_hard(self):
+        # TODO: difficulty normal - generates guess that takes into account of green, yellow, and black tiles
+        pass
+
