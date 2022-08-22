@@ -6,7 +6,7 @@ from discord import Option
 from discord.ext import commands
 from WordleClass.wordle import WordleClass
 
-server_id_list = [872995966066757673, 1009167894573219943]
+server_id_list = [872995966066757673]
 bot = commands.Bot(command_prefix = ".", intents=discord.Intents.all())
 
 @bot.event
@@ -56,6 +56,7 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
 
     time.sleep(5)
     print('game start')
+    await ctx.send('difficulty: ' + difficulty)
     base_game_message = await ctx.send(game.display_game_grid(player_turn, game_status, timeout))
     while in_progress and player_turn < 13:
         try:
@@ -85,19 +86,19 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
                 if difficulty == 'easy':
                     start_time = time.perf_counter()
                     # retrieve guess using the corresponding difficulty
-                    ai_guess = game.get_word_difficulty_test()
+                    ai_guess = game.get_word_difficulty_easy()
                     # continues to retrieve a guess until a valid guess is given
                     while not game.check_guess(ai_guess, actual_word, player_turn):
-                        ai_guess = game.get_word_difficulty_test()
+                        ai_guess = game.get_word_difficulty_easy()
                     finish_time = time.perf_counter()
                     print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                 elif difficulty == 'normal':
                     start_time = time.perf_counter()
                     # retrieve guess using the corresponding difficulty
-                    ai_guess = game.get_word_difficulty_easy(actual_word, player_turn)
+                    ai_guess = game.get_word_difficulty_normal(actual_word, player_turn)
                     # continues to retrieve a guess until a valid guess is given
                     while not game.check_guess(ai_guess, actual_word, player_turn):
-                        ai_guess = game.get_word_difficulty_easy(actual_word, player_turn)
+                        ai_guess = game.get_word_difficulty_normal(actual_word, player_turn)
                     finish_time = time.perf_counter()
                     print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                 elif difficulty == 'hard':
@@ -174,21 +175,16 @@ async def help(ctx):
 
 @bot.slash_command(guild_ids = server_id_list, description = "Testing")
 @commands.cooldown(1, 5, commands.BucketType.user)
-async def test_play(ctx):
-    # TODO: test color tile indicators
+async def test(ctx):
+    # command used for testing
+    await ctx.respond('test command')
     game = WordleClass()
     print('player turn:')
-    game.check_guess("horse", "hence", 1)
-    await ctx.send(game.display_game_grid(1))
+    game.check_guess("tepee", "hence", 1)
+    base_game_message = await ctx.send(game.display_game_grid(1, 'draw', False))
     print('ai turn:')
-    game.check_guess("fence", "hence", 2)
-    await ctx.send(game.display_game_grid(2))
-    print('player turn:')
-    game.check_guess("hange", "hence", 3)
-    await ctx.send(game.display_game_grid(3))
-    print('ai turn:')
-    game.check_guess("power", "hence", 4)
-    await ctx.send(game.display_game_grid(4))
+    game.check_guess("nonce", "hence", 2)
+    await base_game_message.edit(game.display_game_grid(2, 'draw', False))
 
 token = open("token.txt", "r")
 bot.run(token.read())

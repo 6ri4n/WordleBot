@@ -74,7 +74,7 @@ class WordleClass:
         # randomly picks a word from the 5-letter word txt file
         return random.choice(self.five_letter_words)
 
-    def check_guess(self, guess, actual_word, player_turn):
+    def check_guess(self, guess, word, player_turn):
         # TODO:
         # check if the guess is a valid word from the dictionary
         # check if the guess has any matches to the correct word
@@ -127,6 +127,7 @@ class WordleClass:
                 self.ai_grid[int((player_turn / 2) -1)][5] = ' ' + guess
             # check to see if any letters in guess match the actual word
             guess_letter_in_actual_word = 0
+            actual_word = word
             for guess_letter in guess:
                 if guess_letter in actual_word:
                     guess_letter_in_actual_word += 1
@@ -134,27 +135,20 @@ class WordleClass:
             if guess_letter_in_actual_word > 0 :
                 # begin to search for matches
                 for guess_index, guess_letter in enumerate(guess):
-                    # checks if the current letter in guess is in the actual word - decreases search each iteration
+                    print(guess_letter + ' : ' + str(actual_word) + ' : ' + str(guess_letter in actual_word))
+                    # checks if the current letter in guess is in the actual word
                     if guess_letter in actual_word:
                         # if yes then begins to search for the letter in the actual word
                         for actual_word_letter in actual_word:
                             # checks if the letter in guess matches the letter in the actual word
+                            print('comparing: ' + guess_letter + ' : ' + actual_word_letter + ' - searching in: ' + actual_word)
                             if guess_letter == actual_word_letter:
                                 # determine index of the letter from the actual word
                                 # because the search in actual word gets reduced each iteration
-                                if len(actual_word) == 1:
-                                    actual_word_index = 4
-                                elif len(actual_word) == 2:
-                                    actual_word_index = 3
-                                elif len(actual_word) == 3:
-                                    actual_word_index = 2
-                                elif len(actual_word) == 4:
-                                    actual_word_index = 1
-                                else:
-                                    actual_word_index = 0
-
+                                actual_word_index = word.index(guess_letter, guess_index)
+                                print('guess index: ' + str(guess_index) + ' - actual word index: ' + str(actual_word_index))
                                 if guess_index == actual_word_index:
-                                    #print('match: ' + str(guess_index) + ' : ' + str(actual_word_index))
+                                    print('match: ' + str(guess_index) + ' : ' + str(actual_word_index))
                                     # make tile green
                                     # check whose turn it is
                                     if player_turn % 2 != 0:
@@ -167,30 +161,38 @@ class WordleClass:
                                         self.ai_grid[int((player_turn / 2) -1)][guess_index] = '🟩'
                                 # otherwise it's not in the same spot
                                 else:
-                                    #print('!! no match: ' + str(guess_index) + ' : ' + str(actual_word_index))
-                                    # make tile yellow
-                                    # check whose turn it is
-                                    if player_turn % 2 != 0:
-                                        # player turn
-                                        # turn // 2 gives the row of the list, guess_index gives the column of the list
-                                        self.player_grid[int(player_turn // 2)][guess_index] = '🟨'
+                                    print('!! no match: ' + str(guess_index) + ' : ' + str(actual_word_index))
+                                    # check if there are any of the same guess letters in the rest of the actual word 
+                                    # if there are then leave the current tile black
+                                    print(guess_letter + ' count in ' + guess[guess_index:] + ' : ' + str(guess[guess_index:].count(guess_letter)))
+                                    print(guess[guess_index:].count(guess_letter) > 1 and guess[guess_index:].count(guess_letter) > actual_word.count(actual_word_letter))
+                                    if guess[guess_index:].count(guess_letter) > 1 and guess[guess_index:].count(guess_letter) > actual_word.count(actual_word_letter):
+                                        print('duplicate letter: ' + guess_letter)
+                                        # continue to limit the search
+                                        actual_word = actual_word[1:]
+                                        break
                                     else:
-                                        # ai turn
-                                        # (turn / 2) - 1 gives the row of the list, guess_index gives the column of the list
-                                        self.ai_grid[int((player_turn / 2) -1)][guess_index] = '🟨'
+                                        # otherwise make tile yellow
+                                        # check whose turn it is
+                                        if player_turn % 2 != 0:
+                                            # player turn
+                                            # turn // 2 gives the row of the list, guess_index gives the column of the list
+                                            self.player_grid[int(player_turn // 2)][guess_index] = '🟨'
+                                        else:
+                                            # ai turn
+                                            # (turn / 2) - 1 gives the row of the list, guess_index gives the column of the list
+                                            self.ai_grid[int((player_turn / 2) -1)][guess_index] = '🟨'
                                 # ends current letter to move onto next letter in the search
+                                # continue to limit the search
                                 actual_word = actual_word[1:]
-                                #print(actual_word)
                                 break
-                            # continue to limit the search
-                            actual_word = actual_word[1:]
-                            #print(actual_word)
                     else:
-                        # continue to limit the search
+                        # guess letter not in actual word - continue to limit the search
                         actual_word = actual_word[1:]
-                        #print(actual_word)
+                        print('letter not in actual word')
                 return True
             else:
+                # valid guess but no matches
                 return True
         else:
             # invalid word
@@ -221,17 +223,19 @@ class WordleClass:
             # generate guess with the correct letters from the previous guess
             generate_complete = False
             while not generate_complete:
-                correct_letters = 0
+                green_tiles = 0
                 letter_matches = 0
                 ai_guess = random.choice(self.five_letter_words)
+                if ai_guess == self.ai_grid[int((player_turn / 2) -1)][5][1:]:
+                    break
                 # searches for the green tiles from previous guess
                 for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1) - 1]):
                     if tile == '🟩':
-                        correct_letters += 1
+                        green_tiles += 1
                         for current_guess_index, letter in enumerate(ai_guess):
                             if letter == self.ai_grid[int((player_turn / 2) -1) - 1][5][previous_guess_index + 1] and previous_guess_index == current_guess_index:
                                 letter_matches += 1
-                if letter_matches == correct_letters:
+                if letter_matches == green_tiles:
                     generate_complete = True
             return ai_guess
         # otherwise generate random guess
