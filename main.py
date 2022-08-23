@@ -30,15 +30,7 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
 
     # player goes first
     player_turn = 1
-
-    # setup start message
-    start_message = discord.Embed(
-        title = 'Match Starting in 5 Seconds',
-        color = discord.Color.from_rgb(59,136,195)
-        )
-    start_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
-    # display start message
-    await ctx.respond(embed = start_message, delete_after = 5.0)
+    player_name = ctx.user.name + '#' + ctx.user.discriminator
 
     def check(message):
         return len(message.content) == 5 and message.author == ctx.author
@@ -52,12 +44,11 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
         title = 'Invalid Word, Please Try Again',
         color = discord.Color.from_rgb(59,136,195)
     )
-    invalid_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+    invalid_message.set_footer(text = f"{player_name}")
 
-    time.sleep(5)
     print('game start')
-    await ctx.send('difficulty: ' + difficulty)
-    base_game_message = await ctx.send(game.display_game_grid(player_turn, game_status, timeout))
+    interaction_game_message = await ctx.respond(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
+    base_game_message = await interaction_game_message.original_message()
     while in_progress and player_turn < 13:
         try:
             # TODO: implement turn based
@@ -81,24 +72,27 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
                     in_progress = False
             else:
                 # ai turn
-                time.sleep(2.5)
+                # randomize a delay
+                random_delay = random.uniform(2.75, 4.25)
+                print('delay: ' + str(random_delay))
+                time.sleep(random_delay)
                 # determine ai difficulty
                 if difficulty == 'easy':
                     start_time = time.perf_counter()
                     # retrieve guess using the corresponding difficulty
-                    ai_guess = game.get_word_difficulty_easy()
+                    ai_guess = game.get_word_difficulty_easy(player_turn)
                     # continues to retrieve a guess until a valid guess is given
                     while not game.check_guess(ai_guess, actual_word, player_turn):
-                        ai_guess = game.get_word_difficulty_easy()
+                        ai_guess = game.get_word_difficulty_easy(player_turn)
                     finish_time = time.perf_counter()
                     print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                 elif difficulty == 'normal':
                     start_time = time.perf_counter()
                     # retrieve guess using the corresponding difficulty
-                    ai_guess = game.get_word_difficulty_normal(actual_word, player_turn)
+                    ai_guess = game.get_word_difficulty_normal(player_turn)
                     # continues to retrieve a guess until a valid guess is given
                     while not game.check_guess(ai_guess, actual_word, player_turn):
-                        ai_guess = game.get_word_difficulty_normal(actual_word, player_turn)
+                        ai_guess = game.get_word_difficulty_normal(player_turn)
                     finish_time = time.perf_counter()
                     print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                 elif difficulty == 'hard':
@@ -109,7 +103,7 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
                     in_progress = False
             # continue to next turn
             player_turn += 1
-            await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout))
+            await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
         # time out after player inactivity
         except asyncio.TimeoutError:
             in_progress = False
@@ -118,7 +112,7 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
                 title = 'Timed Out Due to Player Inactivity',
                 color = discord.Color.from_rgb(59,136,195)
             )
-            timeout_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+            timeout_message.set_footer(text = f"{player_name}")
             await ctx.send(embed = timeout_message)
     print('game completed')
     # game completed
@@ -126,30 +120,15 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
     if timeout == False:
         # show the actual word after match ends
         await ctx.send('correct word: ' + '||' + actual_word + '||')
-        # show winner/loser/draw message
+        # show winner/loser/draw end message
         if game_status == 'player':
-            end_message = discord.Embed(
-                title = 'Victory! 👤 🏆',
-                color = discord.Color.from_rgb(59,136,195)
-            )
-            end_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
-            await ctx.send(embed = end_message)
+            await ctx.send('victory! 👤 🏆')
         elif game_status == 'ai':
-            end_message = discord.Embed(
-                title = 'Victory! 🤖 🏆',
-                color = discord.Color.from_rgb(59,136,195)
-            )
-            end_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
-            await ctx.send(embed = end_message)
+            await ctx.send('victory! 🤖 🏆')
         else:
-            end_message = discord.Embed(
-                title = 'Draw! 👤 🤝 🤖',
-                color = discord.Color.from_rgb(59,136,195)
-            )
-            end_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
-            await ctx.send(embed = end_message)
+            await ctx.send('draw! 👤 🤝 🤖')
     else:
-        await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout))
+        await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
 
 @bot.slash_command(guild_ids = server_id_list, description = "How-to-Play Wordle")
 @commands.cooldown(1, 60, commands.BucketType.user)
@@ -177,14 +156,13 @@ async def help(ctx):
 @commands.cooldown(1, 5, commands.BucketType.user)
 async def test(ctx):
     # command used for testing
-    await ctx.respond('test command')
     game = WordleClass()
     print('player turn:')
     game.check_guess("tepee", "hence", 1)
-    base_game_message = await ctx.send(game.display_game_grid(1, 'draw', False))
+    base_game_message = await ctx.send(game.display_game_grid(1, 'draw', False, 'bond#6885', 'normal'))
     print('ai turn:')
     game.check_guess("nonce", "hence", 2)
-    await base_game_message.edit(game.display_game_grid(2, 'draw', False))
+    await base_game_message.edit(game.display_game_grid(2, 'draw', False, 'bond#6885', 'normal'))
 
 token = open("token.txt", "r")
 bot.run(token.read())
