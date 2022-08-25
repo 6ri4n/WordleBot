@@ -248,7 +248,7 @@ class WordleClass:
         if player_turn == 2:
             return random.choice(self.five_letter_words)
         # handle green and yellow tiles
-        elif ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1] == True) and ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1] == True):
+        elif ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True:
             # searches for the yellow tiles from previous guess
             yellow_letters = []
             for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1) - 1]):
@@ -281,7 +281,7 @@ class WordleClass:
             return ai_guess
         # handle yellow tiles only
         # check if there are any yellow tiles from previous guess
-        elif '🟨' in self.ai_grid[int((player_turn / 2) -1) - 1] and ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1] == False):
+        elif ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True and ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1]) == False:
             # searches for the yellow tiles from previous guess
             yellow_letters = []
             for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1) - 1]):
@@ -305,7 +305,7 @@ class WordleClass:
             return ai_guess
         # handle green tiles only
         # check if there are any green tiles from previous guess
-        elif '🟩' in self.ai_grid[int((player_turn / 2) -1) - 1] and ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1] == False):
+        elif ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1]) == False:
             # generate guess with the green letters from the previous guess
             generate_complete = False
             while not generate_complete:
