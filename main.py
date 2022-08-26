@@ -21,9 +21,9 @@ async def on_application_command_error(ctx, error):
     else:
         raise error
 
-@bot.slash_command(guild_ids = server_id_list, description = "Play Wordle Against an AI")
+@bot.slash_command(guild_ids = server_id_list, description = "play Wordle against an AI")
 @commands.cooldown(1, 5, commands.BucketType.user) # TODO: change later - set 5 sec cd for ease of testing
-async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'normal', required = True)):
+async def play(ctx, difficulty: Option(str, 'normal, hard, extreme', default = 'normal', required = True)):
     # randomly set a 5-letter word that the player and ai is supposed to guess
     game = WordleClass()
     actual_word = 'hence' #game.get_random_word()
@@ -60,7 +60,7 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
                 #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
                 #print('comparison: ' + str(not game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
                 # continues to retrieve a guess until a valid guess is given
-                while not game.check_guess(player_guess.content.lower(), actual_word, player_turn):
+                while not game.check_guess(player_guess.content.lower(), actual_word, player_turn, difficulty):
                     # display invalid message
                     await ctx.send(embed = invalid_message, delete_after = 3.0)
                     player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
@@ -73,30 +73,39 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
             else:
                 # ai turn
                 # randomize a delay
-                random_delay = random.uniform(2.75, 4.25)
+                random_delay = random.uniform(2.15, 3.0)
                 print('delay: ' + str(random_delay))
                 time.sleep(random_delay)
                 # determine ai difficulty
-                if difficulty == 'easy':
-                    start_time = time.perf_counter()
-                    # retrieve guess using the corresponding difficulty
-                    ai_guess = game.get_word_difficulty_easy(player_turn)
-                    # continues to retrieve a guess until a valid guess is given
-                    while not game.check_guess(ai_guess, actual_word, player_turn):
-                        ai_guess = game.get_word_difficulty_easy(player_turn)
-                    finish_time = time.perf_counter()
-                    print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
-                elif difficulty == 'normal':
+                if difficulty == 'normal':
                     start_time = time.perf_counter()
                     # retrieve guess using the corresponding difficulty
                     ai_guess = game.get_word_difficulty_normal(player_turn)
                     # continues to retrieve a guess until a valid guess is given
-                    while not game.check_guess(ai_guess, actual_word, player_turn):
+                    while not game.check_guess(ai_guess, actual_word, player_turn, difficulty):
                         ai_guess = game.get_word_difficulty_normal(player_turn)
                     finish_time = time.perf_counter()
                     print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                 elif difficulty == 'hard':
-                    pass
+                    start_time = time.perf_counter()
+                    # retrieve guess using the corresponding difficulty
+                    ai_guess = game.get_word_difficulty_hard(player_turn)
+                    # continues to retrieve a guess until a valid guess is given
+                    while not game.check_guess(ai_guess, actual_word, player_turn, difficulty):
+                        ai_guess = game.get_word_difficulty_hard(player_turn)
+                    finish_time = time.perf_counter()
+                    print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
+                    print(game.get_black_tiles())
+                elif difficulty == 'extreme':
+                    start_time = time.perf_counter()
+                    # retrieve guess using the corresponding difficulty
+                    ai_guess = game.get_word_difficulty_extreme(player_turn)
+                    # continues to retrieve a guess until a valid guess is given
+                    while not game.check_guess(ai_guess, actual_word, player_turn, difficulty):
+                        ai_guess = game.get_word_difficulty_extreme(player_turn)
+                    finish_time = time.perf_counter()
+                    print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
+                    print(game.get_black_tiles())
                 # check if the guess matches the actual word
                 if game.check_for_win(player_turn) == 'ai':
                     game_status = 'ai'
@@ -130,7 +139,7 @@ async def play(ctx, difficulty: Option(str, 'easy, normal, hard', default = 'nor
     else:
         await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
 
-@bot.slash_command(guild_ids = server_id_list, description = "How-to-Play Wordle")
+@bot.slash_command(guild_ids = server_id_list, description = "how-to-play Wordle")
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def help(ctx):
     # TODO: send embed message that introduces the game, how-to-play page
@@ -152,7 +161,7 @@ async def help(ctx):
 
     await ctx.respond(embed = help_message)
 
-@bot.slash_command(guild_ids = server_id_list, description = "Testing")
+@bot.slash_command(guild_ids = server_id_list, description = "testing")
 @commands.cooldown(1, 5, commands.BucketType.user)
 async def test(ctx):
     # command used for testing
