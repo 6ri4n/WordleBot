@@ -131,11 +131,11 @@ async def play(ctx, difficulty: Option(str, 'normal, hard, extreme', default = '
         await ctx.send('correct word: ' + '||' + actual_word + '||')
         # show winner/loser/draw end message
         if game_status == 'player':
-            await ctx.send('victory! 👤 🏆')
+            await ctx.send('👤 🏆')
         elif game_status == 'ai':
-            await ctx.send('victory! 🤖 🏆')
+            await ctx.send('🤖 🏆')
         else:
-            await ctx.send('draw! 👤 🤝 🤖')
+            await ctx.send('👤 🤝 🤖')
     else:
         await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
 

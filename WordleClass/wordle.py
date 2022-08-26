@@ -112,7 +112,8 @@ class WordleClass:
         #     return true
         # else:
         #     return false
-
+        if guess == '':
+            return False
         dictionary = enchant.Dict('en_US')
         #print(str(player_turn) + ' : ' + str(guess) + ' : ' + str(dictionary.check(guess)))
         # checks if the guess is a valid word
@@ -188,16 +189,16 @@ class WordleClass:
                             else:
                                 # no matches, black tile
                                 if difficulty == 'hard' or difficulty == 'extreme':
-                                    if (guess_letter in self.ai_black_tiles) == False:
+                                    if (guess_letter in self.ai_black_tiles) == False and (guess_letter in word) == False:
                                         self.ai_black_tiles.append(guess_letter)
                     else:
                         # no matches, black tile
-                        # guess letter not in actual word - continue to limit the search
-                        actual_word = actual_word[1:]
                         #print('letter not in actual word')
                         if difficulty == 'hard' or difficulty == 'extreme':
-                            if (guess_letter in self.ai_black_tiles) == False:
+                            if (guess_letter in self.ai_black_tiles) == False and (guess_letter in word) == False:
                                 self.ai_black_tiles.append(guess_letter)
+                        # guess letter not in actual word - continue to limit the search
+                        actual_word = actual_word[1:]
                 return True
             else:
                 # valid guess but no matches
@@ -226,67 +227,65 @@ class WordleClass:
         if player_turn == 2:
             return random.choice(self.five_letter_words)
         # handle green and yellow tiles
-        elif ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True:
+        elif ('🟩' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True:
             # searches for the yellow tiles from previous guess
             yellow_letters = []
-            for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1)]):
+            for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) - 1)]):
                 if tile == '🟨':
-                    yellow_letters.append(self.ai_grid[int((player_turn / 2) -1) - 1][5][previous_guess_index + 1])
+                    yellow_letters.append(self.ai_grid[int((player_turn / 2) - 1) - 1][5][previous_guess_index + 1])
             # generate guess with the yellow letters from the previous guess
             generate_complete = False
             while not generate_complete:
                 green_tiles = 0
                 green_matches = 0
-                yellow_matches = 0
                 ai_guess = random.choice(self.five_letter_words)
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
-                        break
+                        return ''
                 # searches for the green tiles from previous guess
-                for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1) - 1]):
+                for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) - 1) - 1]):
                     if tile == '🟩':
                         green_tiles += 1
                         for current_guess_index, letter in enumerate(ai_guess):
-                            if letter == self.ai_grid[int((player_turn / 2) -1) - 1][5][previous_guess_index + 1] and previous_guess_index == current_guess_index:
+                            if letter == self.ai_grid[int((player_turn / 2) - 1) - 1][5][previous_guess_index + 1] and previous_guess_index == current_guess_index:
                                 green_matches += 1
                 temp = ''.join(yellow_letters)
                 # searches to see if the guess contains the yellow letters from previous guess
                 for letter in yellow_letters:
                     if temp.count(letter) != ai_guess.count(letter):
-                        break
+                        return ''
                 if green_matches == green_tiles:
                     generate_complete = True
-            #print('green and yellow')
+            print('green and yellow')
             return ai_guess
         # handle yellow tiles only
         # check if there are any yellow tiles from previous guess
-        elif ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True and ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1]) == False:
+        elif ('🟨' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True and ('🟩' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == False:
             # searches for the yellow tiles from previous guess
             yellow_letters = []
-            for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1)]):
+            for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) - 1)]):
                 if tile == '🟨':
-                    yellow_letters.append(self.ai_grid[int((player_turn / 2) -1) - 1][5][previous_guess_index + 1])
+                    yellow_letters.append(self.ai_grid[int((player_turn / 2) - 1) - 1][5][previous_guess_index + 1])
             # generate guess with the yellow letters from the previous guess
             generate_complete = False
             while not generate_complete:
-                yellow_matches = 0
                 ai_guess = random.choice(self.five_letter_words)
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
-                        break
+                        return ''
                 temp = ''.join(yellow_letters)
                 # searches to see if the guess contains the yellow letters from previous guess
                 for letter in yellow_letters:
                     if temp.count(letter) != ai_guess.count(letter):
-                        break
+                        return ''
                 generate_complete = True
-            #print('yellow')
+            print('yellow')
             return ai_guess
         # handle green tiles only
         # check if there are any green tiles from previous guess
-        elif ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1]) == False:
+        elif ('🟩' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == False:
             # generate guess with the green letters from the previous guess
             generate_complete = False
             while not generate_complete:
@@ -296,17 +295,17 @@ class WordleClass:
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
-                        break
+                        return ''
                 # searches for the green tiles from previous guess
-                for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1) - 1]):
+                for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) - 1) - 1]):
                     if tile == '🟩':
                         green_tiles += 1
                         for current_guess_index, letter in enumerate(ai_guess):
-                            if letter == self.ai_grid[int((player_turn / 2) -1) - 1][5][previous_guess_index + 1] and previous_guess_index == current_guess_index:
+                            if letter == self.ai_grid[int((player_turn / 2) - 1) - 1][5][previous_guess_index + 1] and previous_guess_index == current_guess_index:
                                 green_matches += 1
                 if green_matches == green_tiles:
                     generate_complete = True
-            #print('green')
+            print('green')
             return ai_guess
         # otherwise generate random guess
         else:
@@ -316,9 +315,9 @@ class WordleClass:
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
-                        break
+                        return ''
                 generate_complete = True
-            #print('random')
+            print('random')
             return ai_guess
 
     def get_word_difficulty_hard(self, player_turn):
@@ -339,10 +338,10 @@ class WordleClass:
                     generate_complete = True
                 else:
                     ai_guess = random.choice(self.five_letter_words)
-            #print('vowel')
+            print('vowel')
             return ai_guess
         # handle green and yellow tiles
-        elif ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True:
+        elif ('🟩' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True:
             # searches for the yellow tiles from previous guess
             yellow_letters = []
             for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1)]):
@@ -353,71 +352,69 @@ class WordleClass:
             while not generate_complete:
                 green_tiles = 0
                 green_matches = 0
-                yellow_matches = 0
                 black_tile_state = False
                 while not black_tile_state:
                     ai_guess = random.choice(self.five_letter_words)
                     # prevent guess to be the same as the previous guesses
                     for guess in self.ai_grid:
                         if ai_guess == guess[5][1:]:
-                            break
+                            return ''
                     # prevent guess to contain incorrect letters / black tiles
-                    for black_tile in self.ai_black_tiles:
-                        if black_tile in ai_guess:
-                            break
+                    for letter in ai_guess:
+                        if letter in self.ai_black_tiles:
+                            return ''
                     black_tile_state = True
                 # searches for the green tiles from previous guess
                 for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1) - 1]):
                     if tile == '🟩':
                         green_tiles += 1
                         for current_guess_index, letter in enumerate(ai_guess):
-                            if letter == self.ai_grid[int((player_turn / 2) -1) - 1][5][previous_guess_index + 1] and previous_guess_index == current_guess_index:
+                            if letter == self.ai_grid[int((player_turn / 2) - 1) - 1][5][previous_guess_index + 1] and previous_guess_index == current_guess_index:
                                 green_matches += 1
                 if green_matches != green_tiles:
-                    break
+                    return ''
                 temp = ''.join(yellow_letters)
                 # searches to see if the guess contains the yellow letters from previous guess
                 for letter in yellow_letters:
                     if temp.count(letter) != ai_guess.count(letter):
-                        break
+                        return ''
                 generate_complete = True
-            #print('green and yellow')
+            print('green and yellow')
             return ai_guess
         # handle yellow tiles only
         # check if there are any yellow tiles from previous guess
-        elif ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True and ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1]) == False:
+        elif ('🟨' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True and ('🟩' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == False:
             # searches for the yellow tiles from previous guess
             yellow_letters = []
-            for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1)]):
+            for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) - 1)]):
                 if tile == '🟨':
                     yellow_letters.append(self.ai_grid[int((player_turn / 2) -1) - 1][5][previous_guess_index + 1])
             # generate guess with the yellow letters from the previous guess
             generate_complete = False
             while not generate_complete:
-                yellow_matches = 0
                 black_tile_state = False
                 while not black_tile_state:
                     ai_guess = random.choice(self.five_letter_words)
                     # prevent guess to be the same as the previous guesses
                     for guess in self.ai_grid:
                         if ai_guess == guess[5][1:]:
-                            break
+                            return ''
                     # prevent guess to contain incorrect letters / black tiles
-                    for black_tile in self.ai_black_tiles:
-                        if black_tile in ai_guess:
-                            break
+                    for letter in ai_guess:
+                        if letter in self.ai_black_tiles:
+                            return ''
                     black_tile_state = True
                 temp = ''.join(yellow_letters)
                 # searches to see if the guess contains the yellow letters from previous guess
                 for letter in yellow_letters:
                     if temp.count(letter) != ai_guess.count(letter):
-                        break
+                        return ''
                 generate_complete = True
-            #print('yellow')
+            print('yellow')
             return ai_guess
         # handle green tiles only
         # check if there are any green tiles from previous guess
-        elif ('🟩' in self.ai_grid[int((player_turn / 2) -1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) -1) - 1]) == False:
+        elif ('🟩' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == False:
             # generate guess with the green letters from the previous guess
             generate_complete = False
             while not generate_complete:
@@ -429,22 +426,22 @@ class WordleClass:
                     # prevent guess to be the same as the previous guesses
                     for guess in self.ai_grid:
                         if ai_guess == guess[5][1:]:
-                            break
+                            return ''
                     # prevent guess to contain incorrect letters / black tiles
-                    for black_tile in self.ai_black_tiles:
-                        if black_tile in ai_guess:
-                            break
+                    for letter in ai_guess:
+                        if letter in self.ai_black_tiles:
+                            return ''
                     black_tile_state = True
                 # searches for the green tiles from previous guess
-                for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) -1) - 1]):
+                for previous_guess_index, tile in enumerate(self.ai_grid[int((player_turn / 2) - 1) - 1]):
                     if tile == '🟩':
                         green_tiles += 1
                         for current_guess_index, letter in enumerate(ai_guess):
-                            if letter == self.ai_grid[int((player_turn / 2) -1) - 1][5][previous_guess_index + 1] and previous_guess_index == current_guess_index:
+                            if letter == self.ai_grid[int((player_turn / 2) - 1) - 1][5][previous_guess_index + 1] and previous_guess_index == current_guess_index:
                                 green_matches += 1
                 if green_matches == green_tiles:
                     generate_complete = True
-            #print('green')
+            print('green')
             return ai_guess
         # otherwise generate random guess
         else:
@@ -454,13 +451,13 @@ class WordleClass:
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
-                        break
+                        return ''
                 # prevent guess to contain incorrect letters / black tiles
-                for black_tile in self.ai_black_tiles:
-                    if black_tile in ai_guess:
-                        break
+                for letter in ai_guess:
+                    if letter in self.ai_black_tiles:
+                        return ''
                 black_tile_state = True
-            #print('random')
+            print('random')
             return ai_guess
 
     def get_word_difficulty_extreme(self, player_turn):
