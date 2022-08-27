@@ -23,14 +23,14 @@ async def on_application_command_error(ctx, error):
             color = discord.Color.from_rgb(59,136,195)
         )
         invalid_message.set_footer(text = f"{player_name_footer}")
-        await ctx.respond(embed = invalid_message)
+        await ctx.respond(embed = invalid_message, ephemeral = True)
     elif isinstance(error, commands.MaxConcurrencyReached):
         invalid_message = discord.Embed(
             title = 'Please Finish Your Current Game',
             color = discord.Color.from_rgb(59,136,195)
         )
         invalid_message.set_footer(text = f"{player_name_footer}")
-        await ctx.respond(embed = invalid_message)
+        await ctx.respond(embed = invalid_message, ephemeral = True)
     else:
         raise error
 
@@ -226,33 +226,35 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
 async def help(ctx):
     # TODO: send embed message that introduces the game, how-to-play page
     help_message = discord.Embed(
-            title = "how-to-play",
-            description = ("- you have six attempts to guess the word correctly\n\n"
-                           "- each guess must be a valid five-letter word in the dictionary\n\n"
-                           "- after each guess, the color of the tiles will change to show how close your guess was to the correct word\n\n"
-                           "- the AI will win by default if you cannot guess the correct word\n\n"
-                           "tile indicators:\n"
-                           "🟩 - the letter is in the word and in the correct spot\n"
-                           "🟨 - the letter is in the word but in the incorrect spot\n"
-                           "⬛ - the letter is not in the word"
-                           # add statements about the ai difficulty modes
-                        ),
+            title = 'HOW TO PLAY',
+            description = 'Guess the correct five letter word within six attempts (four attempts at extreme difficulty).',
             color = discord.Color.from_rgb(59,136,195)
         )
+    help_message.add_field(name = 'Each guess must be a valid five letter word within the English dictionary.', value = 'During your turn (indicated with ➡️) enter your guess (as a message) in the same channel to submit.', inline = False)
+    help_message.add_field(name = 'After each guess, the color of the tiles will change to indicate how close your guess was to the correct word.', value = 'Green tile indicates that the letter is in the word and in the correct spot.\nYellow tile indicates that the letter is in the word but in the wrong spot.\nBlack tile indicates that the letter is not in the word.', inline = False)
+    help_message.add_field(name = 'Examples.', value = 'correct word:\n:regional_indicator_d: :regional_indicator_r: :regional_indicator_i: :regional_indicator_n: :regional_indicator_k:\n\nguesses:\n:regional_indicator_c: :regional_indicator_u: :regional_indicator_p: :regional_indicator_i: :regional_indicator_d:\n⬛ ⬛ ⬛ 🟨 🟨\n\n:regional_indicator_t: :regional_indicator_r: :regional_indicator_a: :regional_indicator_i: :regional_indicator_t:\n⬛ 🟩 ⬛ 🟨 ⬛\n\nPoint System:', inline = False)
+    help_message.add_field(name = 'Normal.', value = '1-point.', inline = True)
+    help_message.add_field(name = 'Hard.', value = '3-points.', inline = True)
+    help_message.add_field(name = 'Extreme.', value = '15-points.', inline = True)
+    help_message.add_field(name = 'Win.', value = 'Player will be awarded with points that vary depending on the match difficulty. This will count towards the player\'s total amount of games played.', inline = True)
+    help_message.add_field(name = 'Loss.', value = 'Player will not be awarded with any points. This will count towards the player\'s total amount of games played.', inline = True)
+    help_message.add_field(name = 'Draw.', value = 'Player will not be awarded with any points. This will count towards the player\'s total amount of games played.', inline = True)
+    help_message.add_field(name = 'Inactivity Policy.', value = 'One minute of inactivity from the player will result in the game timing out (this will count towards the player\'s total amount of games played).', inline = False)
+    help_message.add_field(name = 'Q: Can I end the match early?', value = 'A: Yes, enter \'quit\' (without the single quotes) to end the match early (this will count towards the player\'s total amount of games played).', inline = False)
     help_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
-
     await ctx.respond(embed = help_message)
 
 @bot.slash_command(guild_ids = server_id_list, description = "test command")
 @commands.max_concurrency(number = 1, per = commands.BucketType.user, wait = False)
 async def test(ctx, difficulty: Option(str, 'normal, hard, extreme', choices = ['normal', 'hard', 'extreme'], required = True)):
     # test command
+    await ctx.respond('test command', ephemeral = True)
     game = WordleClass()
-    print('player turn:')
-    game.check_guess("lipid", "drink", 1, difficulty) # ⬛⬛⬛🟨🟨
-    base_game_message = await ctx.respond(game.display_game_grid(1, 'draw', False, 'testing', difficulty))
-    print('ai turn:')
-    game.check_guess("sheep", "elect", 2, difficulty) # ⬛⬛🟩🟨⬛
+    #print('player turn:')
+    game.check_guess("cupid", "drink", 1, difficulty) # ⬛⬛⬛🟨🟨
+    base_game_message = await ctx.send(game.display_game_grid(1, 'draw', False, 'testing', difficulty))
+    #print('ai turn:')
+    game.check_guess("trait", "drink", 2, difficulty) # ⬛🟩⬛🟨⬛
     await base_game_message.edit(game.display_game_grid(2, 'draw', False, 'testing', difficulty))
 
 token = open("token.txt", "r")
