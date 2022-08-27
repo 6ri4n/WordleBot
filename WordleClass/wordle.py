@@ -257,7 +257,7 @@ class WordleClass:
                         return ''
                 if green_matches == green_tiles:
                     generate_complete = True
-            print('green and yellow')
+            #print('green and yellow')
             return ai_guess
         # handle yellow tiles only
         # check if there are any yellow tiles from previous guess
@@ -281,7 +281,7 @@ class WordleClass:
                     if temp.count(letter) != ai_guess.count(letter):
                         return ''
                 generate_complete = True
-            print('yellow')
+            #print('yellow')
             return ai_guess
         # handle green tiles only
         # check if there are any green tiles from previous guess
@@ -305,7 +305,7 @@ class WordleClass:
                                 green_matches += 1
                 if green_matches == green_tiles:
                     generate_complete = True
-            print('green')
+            #print('green')
             return ai_guess
         # otherwise generate random guess
         else:
@@ -317,7 +317,7 @@ class WordleClass:
                     if ai_guess == guess[5][1:]:
                         return ''
                 generate_complete = True
-            print('random')
+            #print('random')
             return ai_guess
 
     def get_word_difficulty_hard(self, player_turn):
@@ -338,7 +338,7 @@ class WordleClass:
                     generate_complete = True
                 else:
                     ai_guess = random.choice(self.five_letter_words)
-            print('vowel')
+            #print('vowel')
             return ai_guess
         # handle green and yellow tiles
         elif ('🟩' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True:
@@ -379,7 +379,7 @@ class WordleClass:
                     if temp.count(letter) != ai_guess.count(letter):
                         return ''
                 generate_complete = True
-            print('green and yellow')
+            #print('green and yellow')
             return ai_guess
         # handle yellow tiles only
         # check if there are any yellow tiles from previous guess
@@ -410,7 +410,7 @@ class WordleClass:
                     if temp.count(letter) != ai_guess.count(letter):
                         return ''
                 generate_complete = True
-            print('yellow')
+            #print('yellow')
             return ai_guess
         # handle green tiles only
         # check if there are any green tiles from previous guess
@@ -441,7 +441,7 @@ class WordleClass:
                                 green_matches += 1
                 if green_matches == green_tiles:
                     generate_complete = True
-            print('green')
+            #print('green')
             return ai_guess
         # otherwise generate random guess
         else:
@@ -457,7 +457,7 @@ class WordleClass:
                     if letter in self.ai_black_tiles:
                         return ''
                 black_tile_state = True
-            print('random')
+            #print('random')
             return ai_guess
 
     def get_word_difficulty_extreme(self, player_turn):

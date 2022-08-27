@@ -16,24 +16,41 @@ async def on_ready():
 
 @bot.event
 async def on_application_command_error(ctx, error):
+    player_name_footer = ctx.user.name + '#' + ctx.user.discriminator
     if isinstance(error, commands.CommandOnCooldown):
-        await ctx.respond(error)
+        invalid_message = discord.Embed(
+            title = 'Command on Cooldown, Please Try Again Later',
+            color = discord.Color.from_rgb(59,136,195)
+        )
+        invalid_message.set_footer(text = f"{player_name_footer}")
+        await ctx.respond(embed = invalid_message)
+    elif isinstance(error, commands.MaxConcurrencyReached):
+        invalid_message = discord.Embed(
+            title = 'Please Finish Your Current Game',
+            color = discord.Color.from_rgb(59,136,195)
+        )
+        invalid_message.set_footer(text = f"{player_name_footer}")
+        await ctx.respond(embed = invalid_message)
     else:
         raise error
 
 @bot.slash_command(guild_ids = server_id_list, description = "play Wordle against an AI")
-@commands.cooldown(1, 5, commands.BucketType.user) # TODO: change later - set 5 sec cd for ease of testing
-async def play(ctx, difficulty: Option(str, 'normal, hard, extreme', default = 'normal', required = True)):
+#@commands.cooldown(1, 5, commands.BucketType.user) # TODO: change later - set 5 sec cd for ease of testing
+@commands.max_concurrency(number = 1, per = commands.BucketType.user, wait = False)
+async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', choices = ['normal', 'hard', 'extreme'], required = True)):
+    # TODO: play wordle against an AI
+
     # randomly set a 5-letter word that the player and ai is supposed to guess
     game = WordleClass()
-    actual_word = 'hence' #game.get_random_word()
+    actual_word = game.get_random_word()
 
     # player goes first
     player_turn = 1
-    player_name = ctx.user.name + '#' + ctx.user.discriminator
+    player_name_footer = ctx.user.name + '#' + ctx.user.discriminator
+    player_name = '<@' + str(ctx.user.id) + '>'
 
     def check(message):
-        return len(message.content) == 5 and message.author == ctx.author
+        return (len(message.content) == 5 and message.author == ctx.author) or (message.content.lower() == 'quit' and message.author == ctx.author)
     # game progress
     in_progress = True
     timeout = False
@@ -44,7 +61,7 @@ async def play(ctx, difficulty: Option(str, 'normal, hard, extreme', default = '
         title = 'Invalid Word, Please Try Again',
         color = discord.Color.from_rgb(59,136,195)
     )
-    invalid_message.set_footer(text = f"{player_name}")
+    invalid_message.set_footer(text = f"{player_name_footer}")
 
     print('game start')
     interaction_game_message = await ctx.respond(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
@@ -56,13 +73,22 @@ async def play(ctx, difficulty: Option(str, 'normal, hard, extreme', default = '
             if player_turn % 2 != 0:
                 # player turn
                 player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
+                if player_guess.content.lower() == 'quit':
+                    quit_message = discord.Embed(
+                        title = 'HAHAHA Quitting because YOU SUCK!?!?! >:)',
+                        color = discord.Color.from_rgb(59,136,195)
+                    )
+                    quit_message.set_footer(text = f"{player_name_footer}")
+                    await ctx.send(embed = quit_message)
+                    print('game quit')
+                    return ''
                 #print('player guess: ' + player_guess.content.lower())
                 #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
                 #print('comparison: ' + str(not game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
                 # continues to retrieve a guess until a valid guess is given
                 while not game.check_guess(player_guess.content.lower(), actual_word, player_turn, difficulty):
                     # display invalid message
-                    await ctx.send(embed = invalid_message, delete_after = 3.0)
+                    await ctx.send(embed = invalid_message, delete_after = 5.0)
                     player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
                 # delete the player's guess
                 await player_guess.delete()
@@ -74,7 +100,7 @@ async def play(ctx, difficulty: Option(str, 'normal, hard, extreme', default = '
                 # ai turn
                 # randomize a delay
                 random_delay = random.uniform(2.15, 3.0)
-                print('delay: ' + str(random_delay))
+                #print('delay: ' + str(random_delay))
                 time.sleep(random_delay)
                 # determine ai difficulty
                 if difficulty == 'normal':
@@ -95,7 +121,7 @@ async def play(ctx, difficulty: Option(str, 'normal, hard, extreme', default = '
                         ai_guess = game.get_word_difficulty_hard(player_turn)
                     finish_time = time.perf_counter()
                     print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
-                    print(game.get_black_tiles())
+                    #print(game.get_black_tiles())
                 elif difficulty == 'extreme':
                     start_time = time.perf_counter()
                     # retrieve guess using the corresponding difficulty
@@ -105,7 +131,7 @@ async def play(ctx, difficulty: Option(str, 'normal, hard, extreme', default = '
                         ai_guess = game.get_word_difficulty_extreme(player_turn)
                     finish_time = time.perf_counter()
                     print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
-                    print(game.get_black_tiles())
+                    #print(game.get_black_tiles())
                 # check if the guess matches the actual word
                 if game.check_for_win(player_turn) == 'ai':
                     game_status = 'ai'
@@ -121,14 +147,12 @@ async def play(ctx, difficulty: Option(str, 'normal, hard, extreme', default = '
                 title = 'Timed Out Due to Player Inactivity',
                 color = discord.Color.from_rgb(59,136,195)
             )
-            timeout_message.set_footer(text = f"{player_name}")
+            timeout_message.set_footer(text = f"{player_name_footer}")
             await ctx.send(embed = timeout_message)
     print('game completed')
     # game completed
     # display end messages - actual word and winner/draw
     if timeout == False:
-        # show the actual word after match ends
-        await ctx.send('correct word: ' + '||' + actual_word + '||')
         # show winner/loser/draw end message
         if game_status == 'player':
             await ctx.send('👤 🏆')
@@ -136,6 +160,8 @@ async def play(ctx, difficulty: Option(str, 'normal, hard, extreme', default = '
             await ctx.send('🤖 🏆')
         else:
             await ctx.send('👤 🤝 🤖')
+        # show the actual word after match ends
+        await ctx.send('correct word: ' + '||' + actual_word + '||')
     else:
         await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
 
@@ -161,17 +187,11 @@ async def help(ctx):
 
     await ctx.respond(embed = help_message)
 
-@bot.slash_command(guild_ids = server_id_list, description = "testing")
-@commands.cooldown(1, 5, commands.BucketType.user)
-async def test(ctx):
-    # command used for testing
-    game = WordleClass()
-    print('player turn:')
-    game.check_guess("tepee", "hence", 1)
-    base_game_message = await ctx.send(game.display_game_grid(1, 'draw', False, 'bond#6885', 'normal'))
-    print('ai turn:')
-    game.check_guess("nonce", "hence", 2)
-    await base_game_message.edit(game.display_game_grid(2, 'draw', False, 'bond#6885', 'normal'))
+@bot.slash_command(guild_ids = server_id_list, description = "simulation for statistics")
+@commands.max_concurrency(number = 1, per = commands.BucketType.user, wait = False)
+async def simulation(ctx, difficulty: Option(str, 'normal, hard, extreme', choices = ['normal', 'hard', 'extreme'], required = True)):
+    # TODO: simulate wordle matches for ai to solve with given difficulty for gathering statistics
+    pass
 
 token = open("token.txt", "r")
 bot.run(token.read())
