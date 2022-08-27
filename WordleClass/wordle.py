@@ -80,38 +80,7 @@ class WordleClass:
         # check if the guess is a valid word from the dictionary
         # check if the guess has any matches to the correct word
         # returns a boolean
-        #
-        # algorithm:
-        # guess - horse, actual word - hence
-        # letters in guess start large search in actual word then gradually decreases the amount of search
-        # the letter h in horse would search the letters in actual word: h, e, n, c, e
-        # the letter o in horse would search the letters in actual word: e, n, c, e
-        # the letter r in horse would search the letters in actual word: n, c, e
-        # the letter s in horse would search the letters in actual word: c, e
-        # the letter e in horse would search the letters in actual word: e
-        #
-        # pseudocode:
-        # if guess is valid word do
-        #     for each letter in guess do
-        #         if letter is in actual_word do
-        #             guess_letter_in_actual_word += 1
-        #     if guess_letter_in_actual_word > 0:
-        #         for each letter in actual_word do
-        #             if the letter in guess == the letter in actual_word do
-        #                 if the spot of the letter in guess is the same in actual_word do
-        #                     make tile green
-        #                     end search
-        #                 else:
-        #                     make tile yellow
-        #                     end search
-        #                 reduce the search in actual word
-        #                 break
-        #             reduce the search in actual word
-        #     else:
-        #         return false
-        #     return true
-        # else:
-        #     return false
+
         if guess == '':
             return False
         dictionary = enchant.Dict('en_US')
@@ -130,9 +99,10 @@ class WordleClass:
             actual_word = word
             for guess_letter in guess:
                 if guess_letter in actual_word:
-                    guess_letter_in_actual_word += 1
+                    guess_letter_in_actual_word = True
+                    break
             # check if there are any matches, if it's greater than 0 then there are matches
-            if guess_letter_in_actual_word > 0 :
+            if guess_letter_in_actual_word == True:
                 # begin to search for matches
                 for guess_index, guess_letter in enumerate(guess):
                     #print(guess_letter + ' : ' + str(actual_word) + ' : ' + str(guess_letter in actual_word))
@@ -192,9 +162,25 @@ class WordleClass:
                                     if (guess_letter in self.ai_black_tiles) == False and (guess_letter in word) == False:
                                         self.ai_black_tiles.append(guess_letter)
                     else:
-                        # no matches, black tile
+                        # check for possible yellow matches
+                        # search the start instead of the end
+                        if guess_letter in word[0:guess_index]:
+                            for actual_word_index, actual_word_letter in enumerate(word[0:guess_index]):
+                                if guess_letter == actual_word_letter:
+                                    if guess_index != actual_word_index:
+                                        # make tile yellow
+                                        # check whose turn it is
+                                        if player_turn % 2 != 0:
+                                            # player turn
+                                            # turn // 2 gives the row of the list, guess_index gives the column of the list
+                                            self.player_grid[int(player_turn // 2)][guess_index] = '🟨'
+                                        else:
+                                            # ai turn
+                                            # (turn / 2) - 1 gives the row of the list, guess_index gives the column of the list
+                                            self.ai_grid[int((player_turn / 2) -1)][guess_index] = '🟨'
+                        # otherwise no matches, black tile
                         #print('letter not in actual word')
-                        if difficulty == 'hard' or difficulty == 'extreme':
+                        elif difficulty == 'hard' or difficulty == 'extreme':
                             if (guess_letter in self.ai_black_tiles) == False and (guess_letter in word) == False:
                                 self.ai_black_tiles.append(guess_letter)
                         # guess letter not in actual word - continue to limit the search

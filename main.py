@@ -187,11 +187,17 @@ async def help(ctx):
 
     await ctx.respond(embed = help_message)
 
-@bot.slash_command(guild_ids = server_id_list, description = "simulation for statistics")
+@bot.slash_command(guild_ids = server_id_list, description = "test command")
 @commands.max_concurrency(number = 1, per = commands.BucketType.user, wait = False)
-async def simulation(ctx, difficulty: Option(str, 'normal, hard, extreme', choices = ['normal', 'hard', 'extreme'], required = True)):
-    # TODO: simulate wordle matches for ai to solve with given difficulty for gathering statistics
-    pass
-
+async def test(ctx, difficulty: Option(str, 'normal, hard, extreme', choices = ['normal', 'hard', 'extreme'], required = True)):
+    # test command
+    await ctx.respond('test command')
+    game = WordleClass()
+    print('player turn:')
+    game.check_guess("cupid", "drink", 1, difficulty) # ⬛⬛⬛🟨🟨
+    base_game_message = await ctx.send(game.display_game_grid(1, 'draw', False, 'testing', difficulty))
+    print('ai turn:')
+    game.check_guess("sheep", "elect", 2, difficulty) # ⬛⬛🟩🟨⬛
+    await base_game_message.edit(game.display_game_grid(2, 'draw', False, 'testing', difficulty))
 token = open("token.txt", "r")
 bot.run(token.read())
