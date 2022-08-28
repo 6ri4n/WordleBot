@@ -90,7 +90,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     # continues to retrieve a guess until a valid guess is given
                     while not game.check_guess(player_guess.content.lower(), actual_word, player_turn, difficulty):
                         # display invalid message
-                        await ctx.send(embed = invalid_message, delete_after = 5.0)
+                        await ctx.respond(embed = invalid_message, ephemeral = True)
                         player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
                     # delete the player's guess
                     await player_guess.delete()
@@ -154,7 +154,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     # continues to retrieve a guess until a valid guess is given
                     while not game.check_guess(player_guess.content.lower(), actual_word, player_turn, difficulty):
                         # display invalid message
-                        await ctx.send(embed = invalid_message, delete_after = 5.0)
+                        await ctx.respond(embed = invalid_message, ephemeral = True)
                         player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
                     # delete the player's guess
                     await player_guess.delete()
@@ -240,7 +240,8 @@ async def help(ctx):
     help_message.add_field(name = 'Loss.', value = 'Player will not be awarded with any points. This will count towards the player\'s total amount of games played.', inline = True)
     help_message.add_field(name = 'Draw.', value = 'Player will not be awarded with any points. This will count towards the player\'s total amount of games played.', inline = True)
     help_message.add_field(name = 'Inactivity Policy.', value = 'One minute of inactivity from the player will result in the game timing out (this will count towards the player\'s total amount of games played).', inline = False)
-    help_message.add_field(name = 'Q: Can I end the match early?', value = 'A: Yes, enter \'quit\' (without the single quotes) to end the match early (this will count towards the player\'s total amount of games played).', inline = False)
+    help_message.add_field(name = 'Q: Can I end the match early?', value = 'A: Yes, during your turn you can enter \'quit\' (without the single quotes) to end the match early (this will count towards the player\'s total amount of games played).', inline = False)
+    help_message.add_field(name = 'Pro Tip:', value = 'Entering an invalid word will reset your inactivity timer.', inline = False)
     help_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
     await ctx.respond(embed = help_message)
 
@@ -251,10 +252,10 @@ async def test(ctx, difficulty: Option(str, 'normal, hard, extreme', choices = [
     await ctx.respond('test command', ephemeral = True)
     game = WordleClass()
     #print('player turn:')
-    game.check_guess("cupid", "drink", 1, difficulty) # ⬛⬛⬛🟨🟨
+    game.check_guess("cupid", "drink", 1, difficulty)
     base_game_message = await ctx.send(game.display_game_grid(1, 'draw', False, 'testing', difficulty))
     #print('ai turn:')
-    game.check_guess("trait", "drink", 2, difficulty) # ⬛🟩⬛🟨⬛
+    game.check_guess("trait", "drink", 2, difficulty)
     await base_game_message.edit(game.display_game_grid(2, 'draw', False, 'testing', difficulty))
 
 token = open("token.txt", "r")

@@ -215,7 +215,7 @@ class WordleClass:
                         if guess_letter in word[0:guess_index]:
                             for actual_word_index, actual_word_letter in enumerate(word[0:guess_index]):
                                 if guess_letter == actual_word_letter:
-                                    if guess_index != actual_word_index:
+                                    if guess_index != actual_word_index and guess.count(guess_letter) == word.count(guess_letter):
                                         # make tile yellow
                                         # check whose turn it is
                                         if player_turn % 2 != 0:
