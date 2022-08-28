@@ -49,7 +49,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
     player_name = '<@' + str(ctx.user.id) + '>'
 
     def check(message):
-        return (len(message.content) == 5 and message.author == ctx.author) or (message.content.lower() == 'quit' and message.author == ctx.author)
+        return (message.author == ctx.author and ctx.channel.id == message.channel.id and len(message.content) == 5) or (message.author == ctx.author and ctx.channel.id == message.channel.id and message.content.lower() == 'quit')
     # game progress
     in_progress = True
     timeout = False
@@ -205,7 +205,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                 )
                 timeout_message.set_footer(text = f"{player_name_footer}")
                 await ctx.send(embed = timeout_message)
-    print('game completed')
+    print('game completed\n')
     # game completed
     # display end messages - actual word and winner/draw
     if timeout == False:
