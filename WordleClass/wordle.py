@@ -35,7 +35,7 @@ class WordleClass:
                 str_game_grid = '🤖 ' + difficulty + '\n'
                 # build ai grid
                 for list in self.ai_grid[0:4]:
-                    for element in list:
+                    for element in list[0:5]:
                         str_game_grid += element
                     str_game_grid += '\n'
                 # set first line to have no arrow emote
@@ -56,7 +56,7 @@ class WordleClass:
                     str_game_grid = '➡️ ' + '🤖 ' + difficulty + '\n'
                 # build ai grid
                 for list in self.ai_grid[0:4]:
-                    for element in list:
+                    for element in list[0:5]:
                         str_game_grid += element
                     str_game_grid += '\n'
                 # determine whose turn
@@ -80,7 +80,7 @@ class WordleClass:
                 str_game_grid = '🤖 ' + difficulty + '\n'
                 # build ai grid
                 for list in self.ai_grid:
-                    for element in list:
+                    for element in list[0:5]:
                         str_game_grid += element
                     str_game_grid += '\n'
                 # set first line to have no arrow emote
@@ -101,7 +101,7 @@ class WordleClass:
                     str_game_grid = '➡️ ' + '🤖 ' + difficulty + '\n'
                 # build ai grid
                 for list in self.ai_grid:
-                    for element in list:
+                    for element in list[0:5]:
                         str_game_grid += element
                     str_game_grid += '\n'
                 # determine whose turn

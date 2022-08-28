@@ -63,6 +63,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
     invalid_message.set_footer(text = f"{player_name_footer}")
 
     print('game start')
+    print('actual word: ' + actual_word)
     interaction_game_message = await ctx.respond(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
     base_game_message = await interaction_game_message.original_message()
     # determine the difficulty mode
@@ -92,6 +93,15 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         # display invalid message
                         await ctx.respond(embed = invalid_message, ephemeral = True)
                         player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
+                        if player_guess.content.lower() == 'quit':
+                            quit_message = discord.Embed(
+                                title = 'HAHAHA Quitting because YOU SUCK!?!?! >:)',
+                                color = discord.Color.from_rgb(59,136,195)
+                            )
+                            quit_message.set_footer(text = f"{player_name_footer}")
+                            await ctx.send(embed = quit_message)
+                            print('game quit')
+                            return ''
                     # delete the player's guess
                     await player_guess.delete()
                     # check if the guess matches the actual word
@@ -111,6 +121,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     while not game.check_guess(ai_guess, actual_word, player_turn, difficulty):
                         ai_guess = game.get_word_difficulty_extreme(player_turn, actual_word)
                     finish_time = time.perf_counter()
+                    print('ai guess: ' + ai_guess)
                     print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                     #print(game.get_black_tiles())
                     # check if the guess matches the actual word
@@ -156,6 +167,15 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         # display invalid message
                         await ctx.respond(embed = invalid_message, ephemeral = True)
                         player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
+                        if player_guess.content.lower() == 'quit':
+                            quit_message = discord.Embed(
+                                title = 'HAHAHA Quitting because YOU SUCK!?!?! >:)',
+                                color = discord.Color.from_rgb(59,136,195)
+                            )
+                            quit_message.set_footer(text = f"{player_name_footer}")
+                            await ctx.send(embed = quit_message)
+                            print('game quit')
+                            return ''
                     # delete the player's guess
                     await player_guess.delete()
                     # check if the guess matches the actual word
@@ -177,6 +197,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         while not game.check_guess(ai_guess, actual_word, player_turn, difficulty):
                             ai_guess = game.get_word_difficulty_normal(player_turn)
                         finish_time = time.perf_counter()
+                        print('ai guess: ' + ai_guess)
                         print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                     elif difficulty == 'hard':
                         start_time = time.perf_counter()
@@ -186,6 +207,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         while not game.check_guess(ai_guess, actual_word, player_turn, difficulty):
                             ai_guess = game.get_word_difficulty_hard(player_turn)
                         finish_time = time.perf_counter()
+                        print('ai guess: ' + ai_guess)
                         print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                         #print(game.get_black_tiles())
                     # check if the guess matches the actual word
