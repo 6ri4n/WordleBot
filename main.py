@@ -2,6 +2,7 @@ import asyncio
 import random
 import time
 import discord
+import aiosqlite
 from discord import Option
 from discord.ext import commands
 from WordleClass.wordle import WordleClass
@@ -13,6 +14,17 @@ bot = commands.Bot(command_prefix = ".", intents=discord.Intents.all())
 async def on_ready():
     print(f"\nONLINE\nLogged in as {bot.user}\n")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name = "Wordle"))
+    # create table in database
+    async with aiosqlite.connect('database.db') as db:
+        async with db.cursor() as cursor:
+            await cursor.execute('''CREATE TABLE IF NOT EXISTS users
+                                (userId TEXT,
+                                displayName TEXT,
+                                userPoints INTEGER,
+                                totalWin INTEGER,
+                                totalLoss INTEGER,
+                                totalGame INTEGER)''')
+        await db.commit()
 
 @bot.event
 async def on_application_command_error(ctx, error):
@@ -37,6 +49,60 @@ async def on_application_command_error(ctx, error):
 @bot.slash_command(guild_ids = server_id_list, description = "play Wordle against an AI")
 @commands.max_concurrency(number = 1, per = commands.BucketType.user, wait = False)
 async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', choices = ['normal', 'hard', 'extreme'], required = True)):
+    # TODO: function to interact with database
+    async def db_operation(user_id, display_name, difficulty, operation):
+        # check if user is in table
+        async with aiosqlite.connect('database.db') as db:
+            async with db.cursor() as cursor:
+                await cursor.execute('''SELECT userId FROM users WHERE userId = ?''', (user_id,))
+                check = await cursor.fetchone()
+                if check is None:
+                    # user not found
+                    print('user not found in database')
+                    await cursor.execute('''INSERT INTO users
+                                        (userId, displayName,
+                                        userPoints,
+                                        totalWin,
+                                        totalLoss,
+                                        totalGame)
+                                        VALUES (?, ?, 0, 0, 0, 0)''',
+                                        (user_id, display_name,))
+                    print('user added to database')
+                if operation == 'w':
+                    # increase total win
+                    await cursor.execute('''UPDATE users
+                                        SET totalWin = totalWin + 1
+                                        WHERE userId == ?
+                                        ''', (user_id,))
+                    # check for difficulty to award points
+                    if difficulty == 'normal':
+                        await cursor.execute('''UPDATE users
+                                        SET userPoints = userPoints + 1
+                                        WHERE userId == ?
+                                        ''', (user_id,))
+                    elif difficulty == 'hard':
+                        await cursor.execute('''UPDATE users
+                                        SET userPoints = userPoints + 3
+                                        WHERE userId == ?
+                                        ''', (user_id,))
+                    elif difficulty == 'extreme':
+                        await cursor.execute('''UPDATE users
+                                        SET userPoints = userPoints + 15
+                                        WHERE userId == ?
+                                        ''', (user_id,))
+                elif operation == 'l':
+                    # increase total loss
+                    await cursor.execute('''UPDATE users
+                                        SET totalLoss = totalLoss + 1
+                                        WHERE userId == ?
+                                        ''', (user_id,))
+                # increase total game
+                await cursor.execute('''UPDATE users
+                                        SET totalGame = totalGame + 1
+                                        WHERE userId == ?
+                                        ''', (user_id,))
+            await db.commit()
+
     # TODO: play wordle against an AI
 
     # randomly set a 5-letter word that the player and ai is supposed to guess
@@ -47,6 +113,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
     player_turn = 1
     player_name_footer = ctx.user.name + '#' + ctx.user.discriminator
     player_name = '<@' + str(ctx.user.id) + '>'
+    player_id = str(ctx.user.id)
 
     def check(message):
         return (message.author == ctx.author and ctx.channel.id == message.channel.id and len(message.content) == 5) or (message.author == ctx.author and ctx.channel.id == message.channel.id and message.content.lower() == 'quit')
@@ -55,12 +122,6 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
     timeout = False
     # winner/loser/draw
     game_status = 'draw'
-    # setup invalid message
-    invalid_message = discord.Embed(
-        title = 'Invalid Word, Please Try Again',
-        color = discord.Color.from_rgb(59,136,195)
-    )
-    invalid_message.set_footer(text = f"{player_name_footer}")
 
     print('game start')
     print('actual word: ' + actual_word)
@@ -77,13 +138,9 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     # player turn
                     player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
                     if player_guess.content.lower() == 'quit':
-                        quit_message = discord.Embed(
-                            title = 'HAHAHA Quitting because YOU SUCK!?!?! >:)',
-                            color = discord.Color.from_rgb(59,136,195)
-                        )
-                        quit_message.set_footer(text = f"{player_name_footer}")
-                        await ctx.send(embed = quit_message)
+                        await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
                         print('game quit')
+                        await db_operation(player_id, player_name_footer, difficulty, '')
                         return ''
                     #print('player guess: ' + player_guess.content.lower())
                     #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
@@ -91,16 +148,12 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     # continues to retrieve a guess until a valid guess is given
                     while not game.check_guess(player_guess.content.lower(), actual_word, player_turn, difficulty):
                         # display invalid message
-                        await ctx.respond(embed = invalid_message, ephemeral = True)
+                        await ctx.respond('Invalid Word, Please Try Again', ephemeral = True)
                         player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
                         if player_guess.content.lower() == 'quit':
-                            quit_message = discord.Embed(
-                                title = 'HAHAHA Quitting because YOU SUCK!?!?! >:)',
-                                color = discord.Color.from_rgb(59,136,195)
-                            )
-                            quit_message.set_footer(text = f"{player_name_footer}")
-                            await ctx.send(embed = quit_message)
+                            await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
                             print('game quit')
+                            await db_operation(player_id, player_name_footer, difficulty, '')
                             return ''
                     # delete the player's guess
                     await player_guess.delete()
@@ -135,12 +188,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
             except asyncio.TimeoutError:
                 in_progress = False
                 timeout = True
-                timeout_message = discord.Embed(
-                    title = 'Timed Out Due to Player Inactivity',
-                    color = discord.Color.from_rgb(59,136,195)
-                )
-                timeout_message.set_footer(text = f"{player_name_footer}")
-                await ctx.send(embed = timeout_message)
+                await ctx.respond('Timed Out Due to Player Inactivity', ephemeral = True)
     # normal and hard will have 6 rows
     else:
         while in_progress and player_turn < 13:
@@ -151,13 +199,9 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     # player turn
                     player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
                     if player_guess.content.lower() == 'quit':
-                        quit_message = discord.Embed(
-                            title = 'HAHAHA Quitting because YOU SUCK!?!?! >:)',
-                            color = discord.Color.from_rgb(59,136,195)
-                        )
-                        quit_message.set_footer(text = f"{player_name_footer}")
-                        await ctx.send(embed = quit_message)
+                        await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
                         print('game quit')
+                        await db_operation(player_id, player_name_footer, difficulty, '')
                         return ''
                     #print('player guess: ' + player_guess.content.lower())
                     #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
@@ -165,16 +209,12 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     # continues to retrieve a guess until a valid guess is given
                     while not game.check_guess(player_guess.content.lower(), actual_word, player_turn, difficulty):
                         # display invalid message
-                        await ctx.respond(embed = invalid_message, ephemeral = True)
+                        await ctx.respond('Invalid Word, Please Try Again', ephemeral = True)
                         player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
                         if player_guess.content.lower() == 'quit':
-                            quit_message = discord.Embed(
-                                title = 'HAHAHA Quitting because YOU SUCK!?!?! >:)',
-                                color = discord.Color.from_rgb(59,136,195)
-                            )
-                            quit_message.set_footer(text = f"{player_name_footer}")
-                            await ctx.send(embed = quit_message)
+                            await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
                             print('game quit')
+                            await db_operation(player_id, player_name_footer, difficulty, '')
                             return ''
                     # delete the player's guess
                     await player_guess.delete()
@@ -221,12 +261,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
             except asyncio.TimeoutError:
                 in_progress = False
                 timeout = True
-                timeout_message = discord.Embed(
-                    title = 'Timed Out Due to Player Inactivity',
-                    color = discord.Color.from_rgb(59,136,195)
-                )
-                timeout_message.set_footer(text = f"{player_name_footer}")
-                await ctx.send(embed = timeout_message)
+                await ctx.respond('Timed Out Due to Player Inactivity', ephemeral = True)
     print('game completed\n')
     # game completed
     # display end messages - actual word and winner/draw
@@ -234,14 +269,18 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
         # show winner/loser/draw end message
         if game_status == 'player':
             await ctx.send('👤 🏆')
+            await db_operation(player_id, player_name_footer, difficulty, 'w')
         elif game_status == 'ai':
             await ctx.send('🤖 🏆')
+            await db_operation(player_id, player_name_footer, difficulty, 'l')
         else:
             await ctx.send('👤 🤝 🤖')
+            await db_operation(player_id, player_name_footer, difficulty, '')
         # show the actual word after match ends
         await ctx.send('correct word: ' + '||' + actual_word + '||')
     else:
         await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
+        await db_operation(player_id, player_name_footer, difficulty, '')
 
 @bot.slash_command(guild_ids = server_id_list, description = "how-to-play Wordle")
 @commands.cooldown(1, 60, commands.BucketType.user)
@@ -269,16 +308,33 @@ async def help(ctx):
 
 @bot.slash_command(guild_ids = server_id_list, description = "test command")
 @commands.max_concurrency(number = 1, per = commands.BucketType.user, wait = False)
-async def test(ctx, difficulty: Option(str, 'normal, hard, extreme', choices = ['normal', 'hard', 'extreme'], required = True)):
+async def wipe(ctx, var):
     # test command
     await ctx.respond('test command', ephemeral = True)
-    game = WordleClass()
-    #print('player turn:')
-    game.check_guess("cupid", "drink", 1, difficulty)
-    base_game_message = await ctx.send(game.display_game_grid(1, 'draw', False, 'testing', difficulty))
-    #print('ai turn:')
-    game.check_guess("trait", "drink", 2, difficulty)
-    await base_game_message.edit(game.display_game_grid(2, 'draw', False, 'testing', difficulty))
+    if ctx.user.id == 329066373743378432:
+        if var[0:3] == '<@!' and var[-1] == '>':
+            user_id = int(var[3:len(var) - 1])
+            operation = 'user'
+        elif var == 'table':
+            operation = 'table'
+        async with aiosqlite.connect('database.db') as db:
+            async with db.cursor() as cursor:
+                if operation == 'user':
+                    # check if user is in table
+                    await cursor.execute('''SELECT userId FROM users WHERE userId = ?''', (user_id,))
+                    check = await cursor.fetchone()
+                    if check is None:
+                        # user not found
+                        await ctx.respond('user not found', ephemeral = True)
+                    else:
+                        # delete user from table
+                        await cursor.execute('''DELETE FROM users WHERE userId = ?''', (user_id,))
+                        #print('deleted user')
+                elif operation == 'table':
+                    await cursor.execute('''DROP TABLE users''')
+                    #print('deleted users table')
+            await db.commit()
 
-token = open("token.txt", "r")
-bot.run(token.read())
+if __name__ == '__main__':
+    token = open("token.txt", "r")
+    bot.run(token.read())
