@@ -54,13 +54,16 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
         # check if user is in table
         async with aiosqlite.connect('database.db') as db:
             async with db.cursor() as cursor:
-                await cursor.execute('''SELECT userId FROM users WHERE userId = ?''', (user_id,))
+                await cursor.execute('''SELECT userId
+                                    FROM users
+                                    WHERE userId = ?''', (user_id,))
                 check = await cursor.fetchone()
                 if check is None:
                     # user not found
                     print('user not found in database')
                     await cursor.execute('''INSERT INTO users
-                                        (userId, displayName,
+                                        (userId,
+                                        displayName,
                                         userPoints,
                                         totalWin,
                                         totalLoss,
@@ -282,6 +285,135 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
         await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
         await db_operation(player_id, player_name_footer, difficulty, '')
 
+@bot.slash_command(guild_ids = server_id_list, description = "displays a user\'s stats")
+@commands.max_concurrency(number = 1, per = commands.BucketType.user, wait = False)
+async def stats(ctx, user: Option(str, 'mention a user', required = False)):
+    # TODO: display user stats
+    # mentioning will display the mentioned user stats, otherwise display the stats of the user that ran the command
+    if user is None:
+        # user that ran the command
+        user_id = ctx.user.id
+        async with aiosqlite.connect('database.db') as db:
+            async with db.cursor() as cursor:
+                # check if user is in table
+                await cursor.execute('''SELECT userId
+                                    FROM users
+                                    WHERE userId = ?''', (user_id,))
+                check = await cursor.fetchone()
+                if check is None:
+                    # user not found
+                    await ctx.respond('No Available Player Stats to Display', ephemeral = True)
+                else:
+                    # displayer user's stats
+                    # retrieve stats
+                    await cursor.execute('''SELECT userId,
+                                        userPoints,
+                                        totalWin,
+                                        totalLoss,
+                                        totalGame
+                                        FROM users
+                                        WHERE userId = ?''', (user_id,))
+                    stats = await cursor.fetchone()
+                    #print(stats)
+                    point = stats[1]
+                    win = stats[2]
+                    loss = stats[3]
+                    game = stats[4]
+                    # retrieve rank stat
+                    await cursor.execute('''SELECT userId
+                                        FROM users
+                                        ORDER BY userPoints ASC
+                                        ''')
+                    stats_rank = await cursor.fetchall()
+                    for position, id in enumerate(stats_rank):
+                        #print(id)
+                        if int(id[position]) == user_id:
+                            rank = position + 1
+                            break
+                    print(stats_rank)
+                    # display stats of the user that ran the command
+                    stats_message = discord.Embed(
+                        title = 'Player Stats',
+                        description = f'Player: {ctx.user.mention}\nRank: **{rank}** | **{point}** Points\nTotal: **{win}** Wins | **{loss}** Losses | **{game}** Games',
+                        color = discord.Color.from_rgb(59,136,195)
+                    )
+                    stats_message.set_footer(text = f'Win Rate: {(win / game) * 100}%')
+                    await ctx.respond(embed = stats_message)
+    elif user[0:3] == '<@!' and user[-1] == '>':
+        # mentioned user
+        user_id = int(user[3:len(user) - 1])
+        async with aiosqlite.connect('database.db') as db:
+            async with db.cursor() as cursor:
+                # check if user is in table
+                await cursor.execute('''SELECT userId
+                                    FROM users
+                                    WHERE userId = ?''', (user_id,))
+                check = await cursor.fetchone()
+                if check is None:
+                    # user not found
+                    await ctx.respond('No Available Player Stats to Display', ephemeral = True)
+                else:
+                    # display mentioned user's stats
+                    # retrieve stats
+                    await cursor.execute('''SELECT userId,
+                                        userPoints,
+                                        totalWin,
+                                        totalLoss,
+                                        totalGame
+                                        FROM users
+                                        WHERE userId = ?''', (user_id,))
+                    stats = await cursor.fetchone()
+                    #print(stats)
+                    point = stats[1]
+                    win = stats[2]
+                    loss = stats[3]
+                    game = stats[4]
+                    # retrieve rank stat
+                    await cursor.execute('''SELECT userId
+                                        FROM users
+                                        ORDER BY userPoints ASC
+                                        ''')
+                    stats_rank = await cursor.fetchall()
+                    for position, id in enumerate(stats_rank):
+                        #print(id)
+                        if int(id[position]) == user_id:
+                            rank = position + 1
+                            break
+                    #print(stats_rank)
+                    # display stats of the user that ran the command
+                    stats_message = discord.Embed(
+                        title = 'Player Stats',
+                        description = f'Player: <@!{user_id}>\nRank: **{rank}** | **{point}** Points\nTotal: **{win}** Wins | **{loss}** Losses | **{game}** Games',
+                        color = discord.Color.from_rgb(59,136,195)
+                    )
+                    stats_message.set_footer(text = f'Win Rate: {(win / game) * 100}%')
+                    await ctx.respond(embed = stats_message)
+
+@bot.slash_command(guild_ids = server_id_list, description = "global leaderboard")
+@commands.cooldown(1, 60, commands.BucketType.user)
+async def lb(ctx):
+    # TODO: display the top 10 users with the highest points
+    async with aiosqlite.connect('database.db') as db:
+        async with db.cursor() as cursor:
+            # retrieve top 10 players
+            await cursor.execute('''SELECT displayName,
+                                    userPoints
+                                    FROM users
+                                    ORDER BY userPoints ASC
+                                    LIMIT 10''')
+            lb = await cursor.fetchall()
+            players = ''
+            # build player string
+            for rank, player in enumerate(lb):
+                players += f'**{rank + 1}**. {player[0]} | **{player[1]}** Points\n'
+            lb_message = discord.Embed(
+                title = 'Global Leaderboard',
+                description = players,
+                color = discord.Color.from_rgb(59,136,195)
+            )
+            lb_message.set_footer(text = 'Top 10 Players')
+            await ctx.respond(embed = lb_message)
+
 @bot.slash_command(guild_ids = server_id_list, description = "how-to-play Wordle")
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def help(ctx):
@@ -303,7 +435,7 @@ async def help(ctx):
     help_message.add_field(name = 'Inactivity Policy.', value = 'One minute of inactivity from the player will result in the game timing out (this will count towards the player\'s total amount of games played).', inline = False)
     help_message.add_field(name = 'Q: Can I end the match early?', value = 'A: Yes, during your turn you can enter \'quit\' (without the single quotes) to end the match early (this will count towards the player\'s total amount of games played).', inline = False)
     help_message.add_field(name = 'Pro Tip:', value = 'Entering an invalid word will reset your inactivity timer.', inline = False)
-    help_message.set_footer(text = f"{ctx.user.name}#{ctx.user.discriminator}")
+    help_message.set_footer(text = ctx.user.name + '#' + ctx.user.discriminator)
     await ctx.respond(embed = help_message)
 
 @bot.slash_command(guild_ids = server_id_list, description = "test command")
