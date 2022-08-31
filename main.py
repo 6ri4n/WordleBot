@@ -341,6 +341,7 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                     # displayer user's stats
                     # retrieve stats
                     await cursor.execute('''SELECT userId,
+                                        displayName,
                                         userPoints,
                                         totalWin,
                                         totalLoss,

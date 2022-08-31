@@ -120,11 +120,7 @@ class WordleClass:
         return str_game_grid
 
     def get_random_word(self):
-        # randomly picks a valid word
-        #dictionary = enchant.Dict('en_US')
-        #word = random.choice(self.five_letter_words)
-        #while not dictionary.check(word):
-            #word = random.choice(self.five_letter_words)
+        # randomly picks a 5-letter word
         return random.choice(self.five_letter_words)
 
     def check_guess(self, guess, word, player_turn, difficulty):
