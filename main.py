@@ -388,7 +388,7 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                                         userPoints,
                                         totalWin,
                                         totalLoss,
-                                        totalGame
+                                        totalGame,
                                         totalDraw,
                                         totalTimeout,
                                         totalForfeit
