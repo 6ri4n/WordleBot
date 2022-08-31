@@ -23,7 +23,10 @@ async def on_ready():
                                 userPoints INTEGER,
                                 totalWin INTEGER,
                                 totalLoss INTEGER,
-                                totalGame INTEGER)''')
+                                totalGame INTEGER,
+                                totalDraw INTEGER,
+                                totalTimeout INTEGER,
+                                totalForfeit INTEGER)''')
         await db.commit()
 
 @bot.event
@@ -67,9 +70,11 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                                         userPoints,
                                         totalWin,
                                         totalLoss,
-                                        totalGame)
-                                        VALUES (?, ?, 0, 0, 0, 0)''',
-                                        (user_id, display_name,))
+                                        totalGame,
+                                        totalDraw,
+                                        totalTimeout,
+                                        totalForfeit)
+                                        VALUES (?, ?, 0, 0, 0, 0, 0, 0, 0)''', (user_id, display_name,))
                     print('user added to database')
                 if operation == 'w':
                     # increase total win
@@ -80,23 +85,41 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     # check for difficulty to award points
                     if difficulty == 'normal':
                         await cursor.execute('''UPDATE users
-                                        SET userPoints = userPoints + 1
+                                        SET userPoints = userPoints + 3
                                         WHERE userId == ?
                                         ''', (user_id,))
                     elif difficulty == 'hard':
                         await cursor.execute('''UPDATE users
-                                        SET userPoints = userPoints + 3
+                                        SET userPoints = userPoints + 33
                                         WHERE userId == ?
                                         ''', (user_id,))
                     elif difficulty == 'extreme':
                         await cursor.execute('''UPDATE users
-                                        SET userPoints = userPoints + 15
+                                        SET userPoints = userPoints + 333
                                         WHERE userId == ?
                                         ''', (user_id,))
                 elif operation == 'l':
                     # increase total loss
                     await cursor.execute('''UPDATE users
                                         SET totalLoss = totalLoss + 1
+                                        WHERE userId == ?
+                                        ''', (user_id,))
+                elif operation == 'd':
+                    # increase total draw
+                    await cursor.execute('''UPDATE users
+                                        SET totalDraw = totalDraw + 1
+                                        WHERE userId == ?
+                                        ''', (user_id,))
+                elif operation == 't':
+                    # increase total timeout
+                    await cursor.execute('''UPDATE users
+                                        SET totalTimeout = totalTimeout + 1
+                                        WHERE userId == ?
+                                        ''', (user_id,))
+                elif operation == 'q':
+                    # increase total forfeit
+                    await cursor.execute('''UPDATE users
+                                        SET totalForfeit = totalForfeit + 1
                                         WHERE userId == ?
                                         ''', (user_id,))
                 # increase total game
@@ -143,7 +166,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     if player_guess.content.lower() == 'quit':
                         await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
                         print('game quit')
-                        await db_operation(player_id, player_name_footer, difficulty, '')
+                        await db_operation(player_id, player_name_footer, difficulty, 'q')
                         return ''
                     #print('player guess: ' + player_guess.content.lower())
                     #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
@@ -156,7 +179,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         if player_guess.content.lower() == 'quit':
                             await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
                             print('game quit')
-                            await db_operation(player_id, player_name_footer, difficulty, '')
+                            await db_operation(player_id, player_name_footer, difficulty, 'q')
                             return ''
                     # delete the player's guess
                     await player_guess.delete()
@@ -167,9 +190,9 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                 else:
                     # ai turn
                     # randomize a delay
-                    random_delay = random.uniform(2.15, 3.0)
+                    #random_delay = random.uniform(2.15, 3.0)
                     #print('delay: ' + str(random_delay))
-                    time.sleep(random_delay)
+                    #time.sleep(random_delay)
                     start_time = time.perf_counter()
                     # retrieve guess using the corresponding difficulty
                     ai_guess = game.get_word_difficulty_extreme(player_turn, actual_word)
@@ -204,7 +227,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     if player_guess.content.lower() == 'quit':
                         await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
                         print('game quit')
-                        await db_operation(player_id, player_name_footer, difficulty, '')
+                        await db_operation(player_id, player_name_footer, difficulty, 'q')
                         return ''
                     #print('player guess: ' + player_guess.content.lower())
                     #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
@@ -217,7 +240,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         if player_guess.content.lower() == 'quit':
                             await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
                             print('game quit')
-                            await db_operation(player_id, player_name_footer, difficulty, '')
+                            await db_operation(player_id, player_name_footer, difficulty, 'q')
                             return ''
                     # delete the player's guess
                     await player_guess.delete()
@@ -228,9 +251,9 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                 else:
                     # ai turn
                     # randomize a delay
-                    random_delay = random.uniform(2.15, 3.0)
+                    #random_delay = random.uniform(2.15, 3.0)
                     #print('delay: ' + str(random_delay))
-                    time.sleep(random_delay)
+                    #time.sleep(random_delay)
                     # determine ai difficulty
                     if difficulty == 'normal':
                         start_time = time.perf_counter()
@@ -278,12 +301,12 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
             await db_operation(player_id, player_name_footer, difficulty, 'l')
         else:
             await ctx.send('👤 🤝 🤖')
-            await db_operation(player_id, player_name_footer, difficulty, '')
+            await db_operation(player_id, player_name_footer, difficulty, 'd')
         # show the actual word after match ends
         await ctx.send('correct word: ' + '||' + actual_word + '||')
     else:
         await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
-        await db_operation(player_id, player_name_footer, difficulty, '')
+        await db_operation(player_id, player_name_footer, difficulty, 't')
 
 @bot.slash_command(guild_ids = server_id_list, description = "displays a user\'s stats")
 @commands.max_concurrency(number = 1, per = commands.BucketType.user, wait = False)
@@ -310,7 +333,10 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                                         userPoints,
                                         totalWin,
                                         totalLoss,
-                                        totalGame
+                                        totalGame,
+                                        totalDraw,
+                                        totalTimeout,
+                                        totalForfeit
                                         FROM users
                                         WHERE userId = ?''', (user_id,))
                     stats = await cursor.fetchone()
@@ -319,22 +345,25 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                     win = stats[2]
                     loss = stats[3]
                     game = stats[4]
+                    draw = stats[5]
+                    timeout = stats[6]
+                    forfeit = stats[7]
                     # retrieve rank stat
                     await cursor.execute('''SELECT userId
                                         FROM users
-                                        ORDER BY userPoints ASC
+                                        ORDER BY userPoints DESC
                                         ''')
                     stats_rank = await cursor.fetchall()
                     for position, id in enumerate(stats_rank):
                         #print(id)
-                        if int(id[position]) == user_id:
+                        if int(id[0]) == user_id:
                             rank = position + 1
                             break
-                    print(stats_rank)
+                    #print(stats_rank)
                     # display stats of the user that ran the command
                     stats_message = discord.Embed(
                         title = 'Player Stats',
-                        description = f'Player: {ctx.user.mention}\nRank: **{rank}** | **{point}** Points\nTotal: **{win}** Wins | **{loss}** Losses | **{game}** Games',
+                        description = f'Player: {ctx.user.mention}\nRank: **{rank}** | **{point}** Points\nTotal: **{game}** Games\n**{win}** Wins | **{loss}** Losses | **{draw}** Draws\n**{timeout}** Timeouts | **{forfeit}** Forfeits',
                         color = discord.Color.from_rgb(59,136,195)
                     )
                     stats_message.set_footer(text = f'Win Rate: {(win / game) * 100}%')
@@ -360,6 +389,9 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                                         totalWin,
                                         totalLoss,
                                         totalGame
+                                        totalDraw,
+                                        totalTimeout,
+                                        totalForfeit
                                         FROM users
                                         WHERE userId = ?''', (user_id,))
                     stats = await cursor.fetchone()
@@ -368,22 +400,25 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                     win = stats[2]
                     loss = stats[3]
                     game = stats[4]
+                    draw = stats[5]
+                    timeout = stats[6]
+                    forfeit = stats[7]
                     # retrieve rank stat
                     await cursor.execute('''SELECT userId
                                         FROM users
-                                        ORDER BY userPoints ASC
+                                        ORDER BY userPoints DESC
                                         ''')
                     stats_rank = await cursor.fetchall()
                     for position, id in enumerate(stats_rank):
                         #print(id)
-                        if int(id[position]) == user_id:
+                        if int(id[0]) == user_id:
                             rank = position + 1
                             break
                     #print(stats_rank)
                     # display stats of the user that ran the command
                     stats_message = discord.Embed(
                         title = 'Player Stats',
-                        description = f'Player: <@!{user_id}>\nRank: **{rank}** | **{point}** Points\nTotal: **{win}** Wins | **{loss}** Losses | **{game}** Games',
+                        description = f'Player: <@!{user_id}>\nRank: **{rank}** | **{point}** Points\nTotal: **{game}** Games\n**{win}** Wins | **{loss}** Losses | **{draw}** Draws\n**{timeout}** Timeouts | **{forfeit}** Forfeits',
                         color = discord.Color.from_rgb(59,136,195)
                     )
                     stats_message.set_footer(text = f'Win Rate: {(win / game) * 100}%')
@@ -399,7 +434,7 @@ async def lb(ctx):
             await cursor.execute('''SELECT displayName,
                                     userPoints
                                     FROM users
-                                    ORDER BY userPoints ASC
+                                    ORDER BY userPoints DESC
                                     LIMIT 10''')
             lb = await cursor.fetchall()
             players = ''

@@ -120,7 +120,11 @@ class WordleClass:
         return str_game_grid
 
     def get_random_word(self):
-        # randomly picks a word from the 5-letter word txt file
+        # randomly picks a valid word
+        #dictionary = enchant.Dict('en_US')
+        #word = random.choice(self.five_letter_words)
+        #while not dictionary.check(word):
+            #word = random.choice(self.five_letter_words)
         return random.choice(self.five_letter_words)
 
     def check_guess(self, guess, word, player_turn, difficulty):
@@ -259,7 +263,7 @@ class WordleClass:
     def get_word_difficulty_normal(self, player_turn):
         # TODO: difficulty easy - generates guess that takes into account of green and yellow tiles
         if player_turn == 2:
-            return random.choice(self.five_letter_words)
+            return self.get_random_word()
         # handle green and yellow tiles
         elif ('🟩' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True and ('🟨' in self.ai_grid[int((player_turn / 2) - 1) - 1]) == True:
             # searches for the yellow tiles from previous guess
@@ -272,7 +276,7 @@ class WordleClass:
             while not generate_complete:
                 green_tiles = 0
                 green_matches = 0
-                ai_guess = random.choice(self.five_letter_words)
+                ai_guess = self.get_random_word()
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
@@ -304,7 +308,7 @@ class WordleClass:
             # generate guess with the yellow letters from the previous guess
             generate_complete = False
             while not generate_complete:
-                ai_guess = random.choice(self.five_letter_words)
+                ai_guess = self.get_random_word()
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
@@ -325,7 +329,7 @@ class WordleClass:
             while not generate_complete:
                 green_tiles = 0
                 green_matches = 0
-                ai_guess = random.choice(self.five_letter_words)
+                ai_guess = self.get_random_word()
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
@@ -345,7 +349,7 @@ class WordleClass:
         else:
             generate_complete = False
             while not generate_complete:
-                ai_guess = random.choice(self.five_letter_words)
+                ai_guess = self.get_random_word()
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
@@ -360,7 +364,7 @@ class WordleClass:
         # first turn guess word with 2 vowels
         if player_turn == 2:
             vowels = ['a', 'e', 'i', 'o', 'u']
-            ai_guess = random.choice(self.five_letter_words)
+            ai_guess = self.get_random_word()
             # first turn generate guess that contains at least 2 vowels
             generate_complete = False
             while not generate_complete:
@@ -371,7 +375,7 @@ class WordleClass:
                 if vowel_matches >= 2:
                     generate_complete = True
                 else:
-                    ai_guess = random.choice(self.five_letter_words)
+                    ai_guess = self.get_random_word()
             #print('vowel')
             return ai_guess
         # handle green and yellow tiles
@@ -388,7 +392,7 @@ class WordleClass:
                 green_matches = 0
                 black_tile_state = False
                 while not black_tile_state:
-                    ai_guess = random.choice(self.five_letter_words)
+                    ai_guess = self.get_random_word()
                     # prevent guess to be the same as the previous guesses
                     for guess in self.ai_grid:
                         if ai_guess == guess[5][1:]:
@@ -428,7 +432,7 @@ class WordleClass:
             while not generate_complete:
                 black_tile_state = False
                 while not black_tile_state:
-                    ai_guess = random.choice(self.five_letter_words)
+                    ai_guess = self.get_random_word()
                     # prevent guess to be the same as the previous guesses
                     for guess in self.ai_grid:
                         if ai_guess == guess[5][1:]:
@@ -456,7 +460,7 @@ class WordleClass:
                 green_matches = 0
                 black_tile_state = False
                 while not black_tile_state:
-                    ai_guess = random.choice(self.five_letter_words)
+                    ai_guess = self.get_random_word()
                     # prevent guess to be the same as the previous guesses
                     for guess in self.ai_grid:
                         if ai_guess == guess[5][1:]:
@@ -481,7 +485,7 @@ class WordleClass:
         else:
             black_tile_state = False
             while not black_tile_state:
-                ai_guess = random.choice(self.five_letter_words)
+                ai_guess = self.get_random_word()
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
@@ -513,7 +517,7 @@ class WordleClass:
                     alphabet.remove(letter)
                     incorrect_letters += 1
             vowels = ['a', 'e', 'i', 'o', 'u']
-            ai_guess = random.choice(self.five_letter_words)
+            ai_guess = self.get_random_word()
             generate_complete = False
             while not generate_complete:
                 # prevent guess to contain incorrect letters / black tiles
@@ -528,7 +532,7 @@ class WordleClass:
                 if vowel_matches >= 2:
                     generate_complete = True
                 else:
-                    ai_guess = random.choice(self.five_letter_words)
+                    ai_guess = self.get_random_word()
             # append the letters from random_black_tiles into ai_black_tiles
             for letter in random_black_tiles:
                 if (letter in self.ai_black_tiles) == False:
@@ -550,7 +554,7 @@ class WordleClass:
                 green_matches = 0
                 black_tile_state = False
                 while not black_tile_state:
-                    ai_guess = random.choice(self.five_letter_words)
+                    ai_guess = self.get_random_word()
                     # prevent guess to be the same as the previous guesses
                     for guess in self.ai_grid:
                         if ai_guess == guess[5][1:]:
@@ -590,7 +594,7 @@ class WordleClass:
             while not generate_complete:
                 black_tile_state = False
                 while not black_tile_state:
-                    ai_guess = random.choice(self.five_letter_words)
+                    ai_guess = self.get_random_word()
                     # prevent guess to be the same as the previous guesses
                     for guess in self.ai_grid:
                         if ai_guess == guess[5][1:]:
@@ -618,7 +622,7 @@ class WordleClass:
                 green_matches = 0
                 black_tile_state = False
                 while not black_tile_state:
-                    ai_guess = random.choice(self.five_letter_words)
+                    ai_guess = self.get_random_word()
                     # prevent guess to be the same as the previous guesses
                     for guess in self.ai_grid:
                         if ai_guess == guess[5][1:]:
@@ -643,7 +647,7 @@ class WordleClass:
         else:
             black_tile_state = False
             while not black_tile_state:
-                ai_guess = random.choice(self.five_letter_words)
+                ai_guess = self.get_random_word()
                 # prevent guess to be the same as the previous guesses
                 for guess in self.ai_grid:
                     if ai_guess == guess[5][1:]:
