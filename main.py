@@ -127,6 +127,17 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                                         SET totalGame = totalGame + 1
                                         WHERE userId == ?
                                         ''', (user_id,))
+                # check if display name for the user needs to be updated
+                await cursor.execute('''SELECT displayName
+                                    FROM users
+                                    WHERE userId = ?''', (user_id,))
+                check_display_name = await cursor.fetchone()
+                if check_display_name[0] != ctx.user.name + '#' + ctx.user.discriminator:
+                    display_name = ctx.user.name + '#' + ctx.user.discriminator
+                    await cursor.execute('''UPDATE users
+                                        SET displayName = ?
+                                        WHERE userId == ?
+                                        ''', (display_name, user_id,))
             await db.commit()
 
     # TODO: play wordle against an AI
@@ -341,13 +352,13 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                                         WHERE userId = ?''', (user_id,))
                     stats = await cursor.fetchone()
                     #print(stats)
-                    point = stats[1]
-                    win = stats[2]
-                    loss = stats[3]
-                    game = stats[4]
-                    draw = stats[5]
-                    timeout = stats[6]
-                    forfeit = stats[7]
+                    point = stats[2]
+                    win = stats[3]
+                    loss = stats[4]
+                    game = stats[5]
+                    draw = stats[6]
+                    timeout = stats[7]
+                    forfeit = stats[8]
                     # retrieve rank stat
                     await cursor.execute('''SELECT userId
                                         FROM users
@@ -368,6 +379,14 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                     )
                     stats_message.set_footer(text = f'Win Rate: {(win / game) * 100}%')
                     await ctx.respond(embed = stats_message)
+                    # check if display name for the user needs to be updated
+                    if stats[1] != ctx.user.name + '#' + ctx.user.discriminator:
+                        display_name = ctx.user.name + '#' + ctx.user.discriminator
+                        await cursor.execute('''UPDATE users
+                                            SET displayName = ?
+                                            WHERE userId == ?
+                                            ''', (display_name, user_id,))
+            await db.commit()
     elif user[0:3] == '<@!' and user[-1] == '>':
         # mentioned user
         user_id = int(user[3:len(user) - 1])
