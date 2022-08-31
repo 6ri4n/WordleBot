@@ -22,6 +22,7 @@ class WordleClass:
             ['⬛', '⬛', '⬛', '⬛', '⬛', ' ']  # 12
         ]
         self.ai_black_tiles = []
+        self.player_black_tiles = []
     
     def display_game_grid(self, player_turn, game_status, timeout, player_name, difficulty):
         # TODO: combine player and ai grid as one message
@@ -209,13 +210,18 @@ class WordleClass:
                                 if difficulty == 'hard' or difficulty == 'extreme':
                                     if (guess_letter in self.ai_black_tiles) == False and (guess_letter in word) == False:
                                         self.ai_black_tiles.append(guess_letter)
+                                if player_turn % 2 != 0:
+                                    # player turn
+                                    # keep track of black tiles (incorrect letters) from the player
+                                    if (guess_letter in self.player_black_tiles) == False and (guess_letter in word) == False:
+                                        self.player_black_tiles.append(guess_letter)
                     else:
                         # check for possible yellow matches
                         # search the start instead of the end
                         if guess_letter in word[0:guess_index]:
                             for actual_word_index, actual_word_letter in enumerate(word[0:guess_index]):
                                 if guess_letter == actual_word_letter:
-                                    if guess_index != actual_word_index and guess.count(guess_letter) == word.count(guess_letter):
+                                    if guess_index != actual_word_index and guess.count(guess_letter) <= word.count(guess_letter):
                                         # make tile yellow
                                         # check whose turn it is
                                         if player_turn % 2 != 0:
@@ -231,11 +237,22 @@ class WordleClass:
                         elif difficulty == 'hard' or difficulty == 'extreme':
                             if (guess_letter in self.ai_black_tiles) == False and (guess_letter in word) == False:
                                 self.ai_black_tiles.append(guess_letter)
+                        if player_turn % 2 != 0:
+                            # player turn
+                            # keep track of black tiles (incorrect letters) from the player
+                            if (guess_letter in self.player_black_tiles) == False and (guess_letter in word) == False:
+                                self.player_black_tiles.append(guess_letter)
                         # guess letter not in actual word - continue to limit the search
                         actual_word = actual_word[1:]
                 return True
             else:
                 # valid guess but no matches
+                if player_turn % 2 != 0:
+                    # player turn
+                    for guess_letter in guess:
+                        # keep track of black tiles (incorrect letters) from the player
+                        if (guess_letter in self.player_black_tiles) == False and (guess_letter in word) == False:
+                            self.player_black_tiles.append(guess_letter)
                 return True
         else:
             # invalid word
@@ -253,8 +270,11 @@ class WordleClass:
             if self.ai_grid[int((player_turn / 2) -1)][:5] == ['🟩', '🟩', '🟩', '🟩', '🟩']:
                 return 'ai'
     
-    def get_black_tiles(self):
+    def get_ai_black_tiles(self):
         return self.ai_black_tiles
+    
+    def get_player_black_tiles(self):
+        return self.player_black_tiles
 
     def get_word_difficulty_normal(self, player_turn):
         # TODO: difficulty easy - generates guess that takes into account of green and yellow tiles

@@ -154,6 +154,13 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
 
     def check(message):
         return (message.author == ctx.author and ctx.channel.id == message.channel.id and len(message.content) == 5) or (message.author == ctx.author and ctx.channel.id == message.channel.id and message.content.lower() == 'quit')
+    
+    def format_incorrect_letter_message(incorrect_letter_list):
+        message = 'incorrect letters: ['
+        for letter in incorrect_letter_list:
+            message += letter + ', '
+        return message[:len(message) - 2] + ']'
+
     # game progress
     in_progress = True
     timeout = False
@@ -163,6 +170,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
     print('game start')
     print('actual word: ' + actual_word)
     interaction_game_message = await ctx.respond(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
+    incorrect_letter_message = await ctx.send(format_incorrect_letter_message(game.get_player_black_tiles()))
     base_game_message = await interaction_game_message.original_message()
     # determine the difficulty mode
     # extreme will have 4 rows
@@ -194,6 +202,8 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                             return ''
                     # delete the player's guess
                     await player_guess.delete()
+                    # display player's incorrect letters
+                    await incorrect_letter_message.edit(format_incorrect_letter_message(game.get_player_black_tiles()))
                     # check if the guess matches the actual word
                     if game.check_for_win(player_turn) == 'player':
                         game_status = 'player'
@@ -213,7 +223,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     finish_time = time.perf_counter()
                     print('ai guess: ' + ai_guess)
                     print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
-                    #print(game.get_black_tiles())
+                    #print(game.get_ai_black_tiles())
                     # check if the guess matches the actual word
                     if game.check_for_win(player_turn) == 'ai':
                         game_status = 'ai'
@@ -255,6 +265,8 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                             return ''
                     # delete the player's guess
                     await player_guess.delete()
+                    # display player's incorrect letters
+                    await incorrect_letter_message.edit(format_incorrect_letter_message(game.get_player_black_tiles()))
                     # check if the guess matches the actual word
                     if game.check_for_win(player_turn) == 'player':
                         game_status = 'player'
@@ -286,7 +298,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         finish_time = time.perf_counter()
                         print('ai guess: ' + ai_guess)
                         print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
-                        #print(game.get_black_tiles())
+                        #print(game.get_ai_black_tiles())
                     # check if the guess matches the actual word
                     if game.check_for_win(player_turn) == 'ai':
                         game_status = 'ai'
@@ -521,6 +533,22 @@ async def wipe(ctx, var):
                     await cursor.execute('''DROP TABLE users''')
                     #print('deleted users table')
             await db.commit()
+
+@bot.slash_command(guild_ids = server_id_list, description = "test command")
+@commands.max_concurrency(number = 1, per = commands.BucketType.user, wait = False)
+async def guess(ctx, guess: Option(str, 'enter guess', required = True), word: Option(str, 'enter correct word', required = True)):
+    await ctx.respond('guess command')
+    game = WordleClass()
+    player_turn = 1
+    game_status = 'draw'
+    timeout = False
+    player_name = 'test'
+    difficulty = 'normal'
+    guess = guess
+    actual_word = word
+    game_message = await ctx.respond(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
+    game.check_guess(guess, actual_word, player_turn, difficulty)
+    await game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
 
 if __name__ == '__main__':
     token = open("token.txt", "r")
