@@ -277,7 +277,7 @@ class WordleClass:
         return self.player_black_tiles
 
     def get_word_difficulty_normal(self, player_turn):
-        # TODO: difficulty easy - generates guess that takes into account of green and yellow tiles
+        # TODO: difficulty normal - generates guess that takes into account of green and yellow tiles
         if player_turn == 2:
             return self.get_random_word()
         # handle green and yellow tiles

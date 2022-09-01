@@ -8,7 +8,7 @@ from discord.ext import commands
 from WordleClass.wordle import WordleClass
 
 server_id_list = [872995966066757673]
-bot = commands.Bot(command_prefix = ".", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix = ".", intents = discord.Intents.all())
 
 @bot.event
 async def on_ready():
@@ -156,10 +156,14 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
         return (message.author == ctx.author and ctx.channel.id == message.channel.id and len(message.content) == 5) or (message.author == ctx.author and ctx.channel.id == message.channel.id and message.content.lower() == 'quit')
     
     def format_incorrect_letter_message(incorrect_letter_list):
-        message = 'incorrect letters: ['
-        for letter in incorrect_letter_list:
-            message += letter + ', '
-        return message[:len(message) - 2] + ']'
+        if incorrect_letter_list == []:
+            return 'incorrect letters: []'
+        else:
+            incorrect_letter_list.sort()
+            message = 'incorrect letters: ['
+            for letter in incorrect_letter_list:
+                message += letter + ', '
+            return message[:len(message) - 2] + ']'
 
     # game progress
     in_progress = True
@@ -537,7 +541,6 @@ async def wipe(ctx, var):
 @bot.slash_command(guild_ids = server_id_list, description = "test command")
 @commands.max_concurrency(number = 1, per = commands.BucketType.user, wait = False)
 async def guess(ctx, guess: Option(str, 'enter guess', required = True), word: Option(str, 'enter correct word', required = True)):
-    await ctx.respond('guess command')
     game = WordleClass()
     player_turn = 1
     game_status = 'draw'
@@ -546,9 +549,11 @@ async def guess(ctx, guess: Option(str, 'enter guess', required = True), word: O
     difficulty = 'normal'
     guess = guess
     actual_word = word
-    game_message = await ctx.respond(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
+    base = await ctx.respond(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
+    game_message = await base.original_message()
     game.check_guess(guess, actual_word, player_turn, difficulty)
     await game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
+    await ctx.send('correct word: ' + actual_word)
 
 if __name__ == '__main__':
     token = open("token.txt", "r")
