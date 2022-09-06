@@ -559,5 +559,8 @@ async def guess(ctx, guess: Option(str, 'enter guess', required = True), word: O
     await ctx.send('correct word: ' + actual_word)
 
 if __name__ == '__main__':
-    token = open("token.txt", "r")
-    bot.run(token.read())
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    TOKEN = os.getenv("DISCORD_TOKEN")
+    bot.run(TOKEN)
