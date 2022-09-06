@@ -1,4 +1,0 @@
-py-cord
-aiosqlite
-pyenchant==1.6.6
-python-dotenv
