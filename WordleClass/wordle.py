@@ -526,7 +526,7 @@ class WordleClass:
             # randomly generate incorrect letters to put in black tile list to limit ai search
             # which increases the ai chances of winning
             incorrect_letters = 0
-            while incorrect_letters < 10:
+            while incorrect_letters < 6:
                 letter = random.choice(alphabet)
                 if (letter in word) == False:
                     random_black_tiles.append(letter)

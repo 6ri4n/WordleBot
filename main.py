@@ -7,7 +7,7 @@ from discord import Option
 from discord.ext import commands
 from WordleClass.wordle import WordleClass
 
-server_id_list = [872995966066757673]
+server_id_list = [872995966066757673, 999054346715156480]
 bot = commands.Bot(command_prefix = ".", intents = discord.Intents.all())
 
 @bot.event
@@ -63,7 +63,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                 check = await cursor.fetchone()
                 if check is None:
                     # user not found
-                    print('user not found in database')
+                    #print('user not found in database')
                     await cursor.execute('''INSERT INTO users
                                         (userId,
                                         displayName,
@@ -75,7 +75,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                                         totalTimeout,
                                         totalForfeit)
                                         VALUES (?, ?, 0, 0, 0, 0, 0, 0, 0)''', (user_id, display_name,))
-                    print('user added to database')
+                    #print('user added to database')
                 if operation == 'w':
                     # increase total win
                     await cursor.execute('''UPDATE users
@@ -85,17 +85,17 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     # check for difficulty to award points
                     if difficulty == 'normal':
                         await cursor.execute('''UPDATE users
-                                        SET userPoints = userPoints + 3
+                                        SET userPoints = userPoints + 1
                                         WHERE userId == ?
                                         ''', (user_id,))
                     elif difficulty == 'hard':
                         await cursor.execute('''UPDATE users
-                                        SET userPoints = userPoints + 33
+                                        SET userPoints = userPoints + 20
                                         WHERE userId == ?
                                         ''', (user_id,))
                     elif difficulty == 'extreme':
                         await cursor.execute('''UPDATE users
-                                        SET userPoints = userPoints + 333
+                                        SET userPoints = userPoints + 75
                                         WHERE userId == ?
                                         ''', (user_id,))
                 elif operation == 'l':
@@ -116,7 +116,7 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                                         SET totalTimeout = totalTimeout + 1
                                         WHERE userId == ?
                                         ''', (user_id,))
-                elif operation == 'q':
+                elif operation == 'f':
                     # increase total forfeit
                     await cursor.execute('''UPDATE users
                                         SET totalForfeit = totalForfeit + 1
@@ -153,14 +153,14 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
     player_id = str(ctx.user.id)
 
     def check(message):
-        return (message.author == ctx.author and ctx.channel.id == message.channel.id and len(message.content) == 5) or (message.author == ctx.author and ctx.channel.id == message.channel.id and message.content.lower() == 'quit')
+        return (message.author == ctx.author and ctx.channel.id == message.channel.id and len(message.content) == 5) or (message.author == ctx.author and ctx.channel.id == message.channel.id and message.content.lower() == 'ff')
     
     def format_incorrect_letter_message(incorrect_letter_list):
         if incorrect_letter_list == []:
-            return 'incorrect letters: []'
+            return 'incorrect letters:\n[]'
         else:
             incorrect_letter_list.sort()
-            message = 'incorrect letters: ['
+            message = 'incorrect letters:\n['
             for letter in incorrect_letter_list:
                 message += letter + ', '
             return message[:len(message) - 2] + ']'
@@ -171,8 +171,8 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
     # winner/loser/draw
     game_status = 'draw'
 
-    print('game start')
-    print('actual word: ' + actual_word)
+    #print('game start')
+    #print('actual word: ' + actual_word)
     interaction_game_message = await ctx.respond(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
     incorrect_letter_message = await ctx.send(format_incorrect_letter_message(game.get_player_black_tiles()))
     base_game_message = await interaction_game_message.original_message()
@@ -186,10 +186,10 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                 if player_turn % 2 != 0:
                     # player turn
                     player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
-                    if player_guess.content.lower() == 'quit':
+                    if player_guess.content.lower() == 'ff':
+                        await incorrect_letter_message.edit(format_incorrect_letter_message(game.get_player_black_tiles()) + '\ncorrect word: ' + '||' + actual_word + '||')
                         await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
-                        print('game quit')
-                        await db_operation(player_id, player_name_footer, difficulty, 'q')
+                        await db_operation(player_id, player_name_footer, difficulty, 'f')
                         return ''
                     #print('player guess: ' + player_guess.content.lower())
                     #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
@@ -199,10 +199,10 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         # display invalid message
                         await ctx.respond('Invalid Word, Please Try Again', ephemeral = True)
                         player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
-                        if player_guess.content.lower() == 'quit':
+                        if player_guess.content.lower() == 'ff':
+                            await incorrect_letter_message.edit(format_incorrect_letter_message(game.get_player_black_tiles()) + '\ncorrect word: ' + '||' + actual_word + '||')
                             await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
-                            print('game quit')
-                            await db_operation(player_id, player_name_footer, difficulty, 'q')
+                            await db_operation(player_id, player_name_footer, difficulty, 'f')
                             return ''
                     # delete the player's guess
                     await player_guess.delete()
@@ -225,8 +225,8 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                     while not game.check_guess(ai_guess, actual_word, player_turn, difficulty):
                         ai_guess = game.get_word_difficulty_extreme(player_turn, actual_word)
                     finish_time = time.perf_counter()
-                    print('ai guess: ' + ai_guess)
-                    print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
+                    #print('ai guess: ' + ai_guess)
+                    #print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                     #print(game.get_ai_black_tiles())
                     # check if the guess matches the actual word
                     if game.check_for_win(player_turn) == 'ai':
@@ -249,10 +249,10 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                 if player_turn % 2 != 0:
                     # player turn
                     player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
-                    if player_guess.content.lower() == 'quit':
+                    if player_guess.content.lower() == 'ff':
+                        await incorrect_letter_message.edit(format_incorrect_letter_message(game.get_player_black_tiles()) + '\ncorrect word: ' + '||' + actual_word + '||')
                         await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
-                        print('game quit')
-                        await db_operation(player_id, player_name_footer, difficulty, 'q')
+                        await db_operation(player_id, player_name_footer, difficulty, 'f')
                         return ''
                     #print('player guess: ' + player_guess.content.lower())
                     #print('check: ' + str(game.check_guess(player_guess.content.lower(), actual_word, player_turn)))
@@ -262,10 +262,10 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         # display invalid message
                         await ctx.respond('Invalid Word, Please Try Again', ephemeral = True)
                         player_guess = await bot.wait_for("message", timeout = 60.0, check = check)
-                        if player_guess.content.lower() == 'quit':
+                        if player_guess.content.lower() == 'ff':
+                            await incorrect_letter_message.edit(format_incorrect_letter_message(game.get_player_black_tiles()) + '\ncorrect word: ' + '||' + actual_word + '||')
                             await ctx.respond('HAHAHA Quitting because YOU SUCK!?!?! >:)', ephemeral = True)
-                            print('game quit')
-                            await db_operation(player_id, player_name_footer, difficulty, 'q')
+                            await db_operation(player_id, player_name_footer, difficulty, 'f')
                             return ''
                     # delete the player's guess
                     await player_guess.delete()
@@ -290,8 +290,8 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         while not game.check_guess(ai_guess, actual_word, player_turn, difficulty):
                             ai_guess = game.get_word_difficulty_normal(player_turn)
                         finish_time = time.perf_counter()
-                        print('ai guess: ' + ai_guess)
-                        print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
+                        #print('ai guess: ' + ai_guess)
+                        #print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                     elif difficulty == 'hard':
                         start_time = time.perf_counter()
                         # retrieve guess using the corresponding difficulty
@@ -300,8 +300,8 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                         while not game.check_guess(ai_guess, actual_word, player_turn, difficulty):
                             ai_guess = game.get_word_difficulty_hard(player_turn)
                         finish_time = time.perf_counter()
-                        print('ai guess: ' + ai_guess)
-                        print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
+                        #print('ai guess: ' + ai_guess)
+                        #print(str(player_turn) + ' : operation took : ' + '{:.4f}'.format(finish_time - start_time))
                         #print(game.get_ai_black_tiles())
                     # check if the guess matches the actual word
                     if game.check_for_win(player_turn) == 'ai':
@@ -315,24 +315,25 @@ async def play(ctx, difficulty: Option(str, 'select the difficulty for the AI', 
                 in_progress = False
                 timeout = True
                 await ctx.respond('Timed Out Due to Player Inactivity', ephemeral = True)
-    print('game completed\n')
+    #print('game completed\n')
     # game completed
     # display end messages - actual word and winner/draw
     if timeout == False:
         # show winner/loser/draw end message
         if game_status == 'player':
-            await ctx.send('👤 🏆')
+            state = '👤 🏆'
             await db_operation(player_id, player_name_footer, difficulty, 'w')
         elif game_status == 'ai':
-            await ctx.send('🤖 🏆')
+            state = '🤖 🏆'
             await db_operation(player_id, player_name_footer, difficulty, 'l')
         else:
-            await ctx.send('👤 🤝 🤖')
+            state = '👤 🤝 🤖'
             await db_operation(player_id, player_name_footer, difficulty, 'd')
         # show the actual word after match ends
-        await ctx.send('correct word: ' + '||' + actual_word + '||')
+        await incorrect_letter_message.edit(format_incorrect_letter_message(game.get_player_black_tiles()) + '\n' + state + ' correct word: ' + '||' + actual_word + '||')
     else:
         await base_game_message.edit(game.display_game_grid(player_turn, game_status, timeout, player_name, difficulty))
+        await incorrect_letter_message.edit(format_incorrect_letter_message(game.get_player_black_tiles()) + '\ncorrect word: ' + '||' + actual_word + '||')
         await db_operation(player_id, player_name_footer, difficulty, 't')
 
 @bot.slash_command(guild_ids = server_id_list, description = "displays a user\'s stats")
@@ -376,6 +377,7 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                     draw = stats[6]
                     timeout = stats[7]
                     forfeit = stats[8]
+                    win_rate = (win / game) * 100
                     # retrieve rank stat
                     await cursor.execute('''SELECT userId
                                         FROM users
@@ -394,7 +396,7 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                         description = f'Player: {ctx.user.mention}\nRank: **{rank}** | **{point}** Points\nTotal: **{game}** Games\n**{win}** Wins | **{loss}** Losses | **{draw}** Draws\n**{timeout}** Timeouts | **{forfeit}** Forfeits',
                         color = discord.Color.from_rgb(59,136,195)
                     )
-                    stats_message.set_footer(text = f'Win Rate: {(win / game) * 100}%')
+                    stats_message.set_footer(text = f'Win Rate: {win_rate:.2f}%')
                     await ctx.respond(embed = stats_message)
                     # check if display name for the user needs to be updated
                     if stats[1] != ctx.user.name + '#' + ctx.user.discriminator:
@@ -439,6 +441,7 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                     draw = stats[5]
                     timeout = stats[6]
                     forfeit = stats[7]
+                    win_rate = (win / game) * 100
                     # retrieve rank stat
                     await cursor.execute('''SELECT userId
                                         FROM users
@@ -457,7 +460,7 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                         description = f'Player: <@!{user_id}>\nRank: **{rank}** | **{point}** Points\nTotal: **{game}** Games\n**{win}** Wins | **{loss}** Losses | **{draw}** Draws\n**{timeout}** Timeouts | **{forfeit}** Forfeits',
                         color = discord.Color.from_rgb(59,136,195)
                     )
-                    stats_message.set_footer(text = f'Win Rate: {(win / game) * 100}%')
+                    stats_message.set_footer(text = f'Win Rate: {win_rate:.2f}%')
                     await ctx.respond(embed = stats_message)
 
 @bot.slash_command(guild_ids = server_id_list, description = "global leaderboard")
@@ -498,8 +501,8 @@ async def help(ctx):
     help_message.add_field(name = 'After each guess, the color of the tiles will change to indicate how close your guess was to the correct word.', value = 'Green tile indicates that the letter is in the word and in the correct spot.\nYellow tile indicates that the letter is in the word but in the wrong spot.\nBlack tile indicates that the letter is not in the word.', inline = False)
     help_message.add_field(name = 'Examples.', value = 'correct word:\n:regional_indicator_d: :regional_indicator_r: :regional_indicator_i: :regional_indicator_n: :regional_indicator_k:\n\nguesses:\n:regional_indicator_c: :regional_indicator_u: :regional_indicator_p: :regional_indicator_i: :regional_indicator_d:\n⬛ ⬛ ⬛ 🟨 🟨\n\n:regional_indicator_t: :regional_indicator_r: :regional_indicator_a: :regional_indicator_i: :regional_indicator_t:\n⬛ 🟩 ⬛ 🟨 ⬛\n\nPoint System:', inline = False)
     help_message.add_field(name = 'Normal.', value = '1-point.', inline = True)
-    help_message.add_field(name = 'Hard.', value = '3-points.', inline = True)
-    help_message.add_field(name = 'Extreme.', value = '15-points.', inline = True)
+    help_message.add_field(name = 'Hard.', value = '20-points.', inline = True)
+    help_message.add_field(name = 'Extreme.', value = '75-points.', inline = True)
     help_message.add_field(name = 'Win.', value = 'Player will be awarded with points that vary depending on the match difficulty. This will count towards the player\'s total amount of games played.', inline = True)
     help_message.add_field(name = 'Loss.', value = 'Player will not be awarded with any points. This will count towards the player\'s total amount of games played.', inline = True)
     help_message.add_field(name = 'Draw.', value = 'Player will not be awarded with any points. This will count towards the player\'s total amount of games played.', inline = True)
