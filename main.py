@@ -389,6 +389,12 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                         if int(id[0]) == user_id:
                             rank = position + 1
                             break
+                    if rank == 1:
+                        rank = '🥇'
+                    elif rank == 2:
+                        rank = '🥈'
+                    elif rank == 3:
+                        rank = '🥉'
                     #print(stats_rank)
                     # display stats of the user that ran the command
                     stats_message = discord.Embed(
@@ -453,6 +459,12 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                         if int(id[0]) == user_id:
                             rank = position + 1
                             break
+                    if rank == 1:
+                        rank = '🥇'
+                    elif rank == 2:
+                        rank = '🥈'
+                    elif rank == 3:
+                        rank = '🥉'
                     #print(stats_rank)
                     # display stats of the user that ran the command
                     stats_message = discord.Embed(
@@ -479,7 +491,14 @@ async def lb(ctx):
             players = ''
             # build player string
             for rank, player in enumerate(lb):
-                players += f'**{rank + 1}**. {player[0]} | **{player[1]}** Points\n'
+                if rank == 0:
+                    players += f'🥇 {player[0]} | **{player[1]}** Points\n'
+                elif rank == 1:
+                    players += f'🥈 {player[0]} | **{player[1]}** Points\n'
+                elif rank == 2:
+                    players += f'🥉 {player[0]} | **{player[1]}** Points\n'
+                else:
+                    players += f'**{rank + 1}**. {player[0]} | **{player[1]}** Points\n'
             lb_message = discord.Embed(
                 title = 'Global Leaderboard',
                 description = players,
