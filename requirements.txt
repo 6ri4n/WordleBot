@@ -1,4 +1,4 @@
 py-cord
 aiosqlite
-python-enchant
+pyenchant==3.2.2
 python-dotenv
