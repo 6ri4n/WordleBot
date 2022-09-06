@@ -1,4 +1,4 @@
-py -3 -m pip install -U py-cord
+py-cord
 aiosqlite
 pyenchant
 python-dotenv
