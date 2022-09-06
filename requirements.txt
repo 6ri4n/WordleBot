@@ -1,4 +1,4 @@
 py-cord
 aiosqlite
-pyenchant
+python-enchant
 python-dotenv
