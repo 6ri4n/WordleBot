@@ -11,7 +11,7 @@ This project is created with:
 * [python-dotenv](https://pypi.org/project/python-dotenv/) | version: 0.21.0
 
 ## What I learned/improved
-This is my first major project. I learned about APIs, Asynchronous programming, and reading documentations. Areas I improved on: debugging, OOP, SQL, and Linux (deployed on a Raspberry Pi)
+This is my first major project. I learned about APIs, Asynchronous programming, and reading documentations. Areas I improved on: debugging, OOP, SQL, Python, and Linux (deployed on a Raspberry Pi)
 
 ## Acknowledgments
 The 5-letter-words.txt file in this repository contains the majority of the words from Donald E. Knuth's compiled 5 letter word list (found [here](https://www-cs-faculty.stanford.edu/~knuth/sgb.html)) but the list has been modified to suit the needs of this project.
