@@ -391,15 +391,20 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                             break
                     if rank == 1:
                         rank = '🥇'
+                        desc = f'Player: <@!{user_id}>\nRank: **{rank}** | **{point:,}** Points\nTotal: **{game:,}** Games\n**{win:,}** Wins | **{loss:,}** Losses | **{draw:,}** Draws\n**{timeout:,}** Timeouts | **{forfeit:,}** Forfeits'
                     elif rank == 2:
                         rank = '🥈'
+                        desc = f'Player: <@!{user_id}>\nRank: **{rank}** | **{point:,}** Points\nTotal: **{game:,}** Games\n**{win:,}** Wins | **{loss:,}** Losses | **{draw:,}** Draws\n**{timeout:,}** Timeouts | **{forfeit:,}** Forfeits'
                     elif rank == 3:
                         rank = '🥉'
+                        desc = f'Player: <@!{user_id}>\nRank: **{rank}** | **{point:,}** Points\nTotal: **{game:,}** Games\n**{win:,}** Wins | **{loss:,}** Losses | **{draw:,}** Draws\n**{timeout:,}** Timeouts | **{forfeit:,}** Forfeits'
+                    else:
+                        desc = f'Player: {ctx.user.mention}\nRank: **{rank:,}** | **{point:,}** Points\nTotal: **{game:,}** Games\n**{win:,}** Wins | **{loss:,}** Losses | **{draw:,}** Draws\n**{timeout:,}** Timeouts | **{forfeit:,}** Forfeits'
                     #print(stats_rank)
                     # display stats of the user that ran the command
                     stats_message = discord.Embed(
                         title = 'Player Stats',
-                        description = f'Player: {ctx.user.mention}\nRank: **{rank:,}** | **{point:,}** Points\nTotal: **{game:,}** Games\n**{win:,}** Wins | **{loss:,}** Losses | **{draw:,}** Draws\n**{timeout:,}** Timeouts | **{forfeit:,}** Forfeits',
+                        description = desc,
                         color = discord.Color.from_rgb(59,136,195)
                     )
                     stats_message.set_footer(text = f'Win Rate: {win_rate:.2f}%')
@@ -461,15 +466,20 @@ async def stats(ctx, user: Option(str, 'mention a user', required = False)):
                             break
                     if rank == 1:
                         rank = '🥇'
+                        desc = desc = f'Player: <@!{user_id}>\nRank: **{rank}** | **{point:,}** Points\nTotal: **{game:,}** Games\n**{win:,}** Wins | **{loss:,}** Losses | **{draw:,}** Draws\n**{timeout:,}** Timeouts | **{forfeit:,}** Forfeits'
                     elif rank == 2:
                         rank = '🥈'
+                        desc = desc = f'Player: <@!{user_id}>\nRank: **{rank}** | **{point:,}** Points\nTotal: **{game:,}** Games\n**{win:,}** Wins | **{loss:,}** Losses | **{draw:,}** Draws\n**{timeout:,}** Timeouts | **{forfeit:,}** Forfeits'
                     elif rank == 3:
                         rank = '🥉'
+                        desc = f'Player: <@!{user_id}>\nRank: **{rank}** | **{point:,}** Points\nTotal: **{game:,}** Games\n**{win:,}** Wins | **{loss:,}** Losses | **{draw:,}** Draws\n**{timeout:,}** Timeouts | **{forfeit:,}** Forfeits'
+                    else:
+                        desc = f'Player: <@!{user_id}>\nRank: **{rank:,}** | **{point:,}** Points\nTotal: **{game:,}** Games\n**{win:,}** Wins | **{loss:,}** Losses | **{draw:,}** Draws\n**{timeout:,}** Timeouts | **{forfeit:,}** Forfeits'
                     #print(stats_rank)
                     # display stats of the user that ran the command
                     stats_message = discord.Embed(
                         title = 'Player Stats',
-                        description = f'Player: <@!{user_id}>\nRank: **{rank:,}** | **{point:,}** Points\nTotal: **{game:,}** Games\n**{win:,}** Wins | **{loss:,}** Losses | **{draw:,}** Draws\n**{timeout:,}** Timeouts | **{forfeit:,}** Forfeits',
+                        description = desc,
                         color = discord.Color.from_rgb(59,136,195)
                     )
                     stats_message.set_footer(text = f'Win Rate: {win_rate:.2f}%')
@@ -498,7 +508,7 @@ async def lb(ctx):
                 elif rank == 2:
                     players += f'🥉 {player[0]} | **{player[1]:,}** Points\n'
                 else:
-                    players += f'**{rank + 1}**. {player[0]} | **{player[1]:,}** Points\n'
+                    players += f'**{rank + 1:,}**. {player[0]} | **{player[1]:,}** Points\n'
             lb_message = discord.Embed(
                 title = 'Global Leaderboard',
                 description = players,
