@@ -1,6 +1,6 @@
-# WordleAI
+# WordleBot
 ##### Project Status: Completed
-A Discord bot developed in Python that allows users to play Wordle against an AI with three selectable difficulty levels and tracks user stats for competitiveness.
+A Discord bot developed in Python that allows players to play Wordle against a computer opponent with three selectable difficulty levels and tracks player stats for competitiveness.
 
 [YouTube Demo of the Discord bot.](https://youtu.be/hJlJARhmCvw)
 
